@@ -184,7 +184,7 @@ func (k *Kustomer) call(
 		return resp, nil
 	}
 
-	if err := json.Unmarshal(body, &target); err != nil {
+	if err := json.Unmarshal(body, target); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal response body")
 	}
 
