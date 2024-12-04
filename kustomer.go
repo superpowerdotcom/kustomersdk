@@ -1,13 +1,16 @@
 package kustomersdk
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"reflect"
+	"time"
 
 	"github.com/pkg/errors"
-	"github.com/superpowerdotcom/go-lib-common/util"
 )
 
 const BaseAPIURL = "https://api.kustomerapp.com/v1"
@@ -26,15 +29,30 @@ type IKustomer interface {
 
 type Options struct {
 	APIKey string
+	Client *http.Client
 }
 
 type Kustomer struct {
-	opts *Options
+	opts   *Options
+	Client *http.Client
 }
 
 func New(opts *Options) (*Kustomer, error) {
+	if err := validateOptions(opts); err != nil {
+		return nil, errors.Wrap(err, "unable to validate options")
+	}
+
+	// Client is an option so that we can inject a mock client for testing
+	// or if we want to use a custom client for any reason
+	if opts.Client == nil {
+		opts.Client = &http.Client{
+			Timeout: 5 * time.Second,
+		}
+	}
+
 	return &Kustomer{
-		opts: opts,
+		opts:   opts,
+		Client: opts.Client,
 	}, nil
 }
 
@@ -54,8 +72,8 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	headers := k.getHeaders()
 	resp := &GetCustomerByExternalIDResponse{}
 
-	endpoint := BaseAPIURL + "/customers/externalId=" + externalID
-	_, err := util.DoHTTP(ctx, "GET", endpoint, nil, resp, headers...)
+	endpoint := fmt.Sprintf("%s/customers/externalId=%s", BaseAPIURL, externalID)
+	_, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to get customer by external ID '%s'", externalID)
 	}
@@ -75,9 +93,9 @@ func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversati
 
 	headers := k.getHeaders()
 	resp := &CreateConversationResponse{}
+	endpoint := fmt.Sprintf("%s/customers/%s/conversation", BaseAPIURL, req.ID)
 
-	endpoint := BaseAPIURL + "/v1/customers/" + req.ID + "/conversation"
-	_, err = util.DoHTTP(ctx, "POST", endpoint, body, resp, headers...)
+	_, err = k.call(ctx, endpoint, http.MethodPost, body, resp, headers...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", req.ID)
 	}
@@ -97,9 +115,9 @@ func (k *Kustomer) CreateDraftMessage(ctx context.Context, customerID string, re
 
 	headers := k.getHeaders()
 	resp := &CreateDraftMessageResponse{}
-
 	endpoint := fmt.Sprintf("%s/customers/%s/drafts", BaseAPIURL, customerID)
-	_, err = util.DoHTTP(ctx, "POST", endpoint, body, resp, headers...)
+
+	_, err = k.call(ctx, endpoint, http.MethodPost, body, resp, headers...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create draft message for conversation '%s' and recipient '%s'", req.Conversation, req.To)
 	}
@@ -113,4 +131,87 @@ func (k *Kustomer) getHeaders() []http.Header {
 		{"Authorization": []string{"Bearer " + k.opts.APIKey}},
 		{"Content-Type": []string{"application/json"}},
 	}
+}
+
+func (k *Kustomer) call(
+	_ context.Context,
+	endpoint,
+	method string,
+	requestBody []byte,
+	target any,
+	headers ...http.Header,
+) (*http.Response, error) {
+
+	if target != nil {
+		if reflect.ValueOf(target).Kind() != reflect.Ptr {
+			return nil, errors.New("target must be a pointer")
+		}
+	}
+
+	// Automatically handles nil requestBody
+	bodyBuffer := bytes.NewBuffer(requestBody)
+
+	// Generate request
+	request, err := http.NewRequest(method, endpoint, bodyBuffer)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create http request")
+	}
+
+	// Set headers
+	for _, h := range headers {
+		request.Header = h
+	}
+
+	// Perform the request
+	resp, err := k.Client.Do(request)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to perform http request")
+	}
+
+	defer resp.Body.Close()
+
+	body, err := GetResponseBody(resp)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get response body")
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("received non-200 status code: %d; resp body: %s", resp.StatusCode, string(body))
+	}
+
+	// If there is no target, we are done
+	if target == nil {
+		return resp, nil
+	}
+
+	if err := json.Unmarshal(body, &target); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal response body")
+	}
+
+	return resp, nil
+}
+
+func GetResponseBody(resp *http.Response) ([]byte, error) {
+	if resp == nil {
+		return nil, errors.New("response cannot be nil")
+	}
+
+	if resp.Body == nil {
+		return nil, errors.New("response body cannot be nil")
+	}
+
+	defer resp.Body.Close()
+
+	// Read the response body into a buffer so we can re-add the body back into
+	// the response for others to use
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read response body")
+	}
+
+	// Re-create body so it can be read again
+	resp.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+
+	return buf.Bytes(), nil
 }

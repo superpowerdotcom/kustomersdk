@@ -48,7 +48,7 @@ type CreateDraftMessageRequest struct {
 	Conversation string         `json:"conversation,omitempty"`
 	To           string         `json:"to,omitempty"`
 	From         string         `json:"from,omitempty"`
-	Body         string         `json:"body,omitempty"` //REQUIRED
+	Body         string         `json:"body,omitempty"`
 	SendAt       string         `json:"send_at,omitempty"`
 }
 
