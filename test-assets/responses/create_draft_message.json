@@ -1,0 +1,51 @@
+{
+  "data": {
+    "id": "5823e4d3bff98a100085320e",
+    "type": "draft",
+    "attributes": {
+      "channel": "email",
+      "status": "draft",
+      "createdAt": "2016-11-10T03:09:07.575Z",
+      "updatedAt": "2016-11-10T03:09:07.575Z",
+      "modifiedAt": "2016-11-10T03:09:07.575Z"
+    },
+    "relationships": {
+      "org": {
+        "data": {
+          "type": "org",
+          "id": "57f29863a1dbf61100e6aa92"
+        },
+        "links": {
+          "self": "/v1/orgs/57f29863a1dbf61100e6aa92"
+        }
+      },
+      "customer": {
+        "data": {
+          "type": "customer",
+          "id": "58210c3db0f09110006b7953"
+        },
+        "links": {
+          "self": "/v1/customers/58210c3db0f09110006b7953"
+        }
+      },
+      "createdBy": {
+        "data": {
+          "type": "user",
+          "id": "58190b991f2932100010d683"
+        },
+        "links": {
+          "self": "/v1/users/58190b991f2932100010d683"
+        }
+      },
+      "modifiedBy": {
+        "data": {
+          "type": "user",
+          "id": "58190b991f2932100010d683"
+        },
+        "links": {
+          "self": "/v1/users/58190b991f2932100010d683"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "data": {
+    "type": "conversation",
+    "id": "58228e05d4e96711004eccb7",
+    "attributes": {
+      "name": "New Conversation",
+      "channels": [],
+      "status": "open",
+      "messageCount": 0,
+      "noteCount": 0,
+      "satisfaction": 0,
+      "createdAt": "2016-11-09T02:46:29.789Z",
+      "updatedAt": "2016-11-09T02:46:29.789Z",
+      "modifiedAt": "2016-11-09T02:46:29.789Z",
+      "tags": [],
+      "suggestedTags": [],
+      "sentiment": {},
+      "lastMessageIn": {},
+      "assignedUsers": [],
+      "assignedTeams": [],
+      "firstResponse": {},
+      "direction": "in",
+      "outboundMessageCount": 0,
+      "rev": 1
+    },
+    "relationships": {
+      "org": {
+        "links": {
+          "self": "/v1/orgs/57f29863a1dbf61100e6aa92"
+        },
+        "data": {
+          "type": "org",
+          "id": "57f29863a1dbf61100e6aa92"
+        }
+      },
+      "customer": {
+        "links": {
+          "self": "/v1/customers/58210c3db0f09110006b7953"
+        },
+        "data": {
+          "type": "customer",
+          "id": "58210c3db0f09110006b7953"
+        }
+      },
+      "messages": {
+        "links": {
+          "self": "/v1/conversations/58228e05d4e96711004eccb7/messages"
+        }
+      },
+      "createdBy": {
+        "links": {
+          "self": "/v1/users/58190b991f2932100010d683"
+        },
+        "data": {
+          "type": "user",
+          "id": "58190b991f2932100010d683"
+        }
+      },
+      "modifiedBy": {
+        "links": {
+          "self": "/v1/users/58190b991f2932100010d683"
+        },
+        "data": {
+          "type": "user",
+          "id": "58190b991f2932100010d683"
+        }
+      }
+    },
+    "links": {
+      "self": "/v1/conversations/58228e05d4e96711004eccb7"
+    }
+  }
+}
