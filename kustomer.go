@@ -170,7 +170,7 @@ func (k *Kustomer) call(
 
 	defer resp.Body.Close()
 
-	body, err := GetResponseBody(resp)
+	body, err := getResponseBody(resp)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get response body")
 	}
@@ -191,7 +191,7 @@ func (k *Kustomer) call(
 	return resp, nil
 }
 
-func GetResponseBody(resp *http.Response) ([]byte, error) {
+func getResponseBody(resp *http.Response) ([]byte, error) {
 	if resp == nil {
 		return nil, errors.New("response cannot be nil")
 	}
