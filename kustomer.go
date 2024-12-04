@@ -159,7 +159,11 @@ func (k *Kustomer) call(
 
 	// Set headers
 	for _, h := range headers {
-		request.Header = h
+		for key, values := range h {
+			for _, value := range values {
+				request.Header.Set(key, value)
+			}
+		}
 	}
 
 	// Perform the request
