@@ -67,39 +67,6 @@ type CreateDraftMessageResponse struct {
 	} `json:"data"`
 }
 
-type T struct {
-	Data struct {
-		Type       string `json:"type"`
-		Id         string `json:"id"`
-		Attributes struct {
-			Name          string        `json:"name"`
-			Channels      []interface{} `json:"channels"`
-			Status        string        `json:"status"`
-			MessageCount  int           `json:"messageCount"`
-			NoteCount     int           `json:"noteCount"`
-			Satisfaction  int           `json:"satisfaction"`
-			CreatedAt     time.Time     `json:"createdAt"`
-			UpdatedAt     time.Time     `json:"updatedAt"`
-			ModifiedAt    time.Time     `json:"modifiedAt"`
-			Tags          []interface{} `json:"tags"`
-			SuggestedTags []interface{} `json:"suggestedTags"`
-			Sentiment     struct {
-			} `json:"sentiment"`
-			LastMessageIn struct {
-			} `json:"lastMessageIn"`
-			AssignedUsers []interface{} `json:"assignedUsers"`
-			AssignedTeams []interface{} `json:"assignedTeams"`
-			FirstResponse struct {
-			} `json:"firstResponse"`
-			Direction            string `json:"direction"`
-			OutboundMessageCount int    `json:"outboundMessageCount"`
-			Rev                  int    `json:"rev"`
-		} `json:"attributes"`
-		Relationships Relationships `json:"relationships"`
-		Links         Links         `json:"links"`
-	} `json:"data"`
-}
-
 type GetCustomerByExternalIDResponse struct {
 	Data struct {
 		Type       string `json:"type"`
