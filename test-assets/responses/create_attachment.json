@@ -1,0 +1,45 @@
+{
+  "data": {
+    "id": "5a4d1a8a6d92880012ad2923",
+    "type": "attachment",
+    "attributes": {
+      "name": "myattachment.jpg",
+      "contentType": "image/jpeg",
+      "contentLength": 512,
+      "uploaded": false,
+      "redacted": false
+    },
+    "relationships": {
+      "org": {
+        "data": {
+          "id": "56b0cd58baccb23e00c847cf",
+          "type": "org"
+        },
+        "links": {
+          "self": "/v1/orgs/56b0cd58baccb23e00c847cf"
+        }
+      }
+    },
+    "links": {
+      "self": "/v1/attachments/5a4d1a8a6d92880012ad2923",
+      "related": "http://www.cool.com"
+    }
+  },
+  "meta": {
+    "upload": {
+      "url": "https://attachment.signedurl.com/",
+      "fields": {
+        "key": "attachments/56b0cd58baccb23e00c847cf/5a4d1a8a6d92880012ad2923-myattachment.jpg",
+        "acl": "private",
+        "Content-Type": "image/jpeg",
+        "X-Amz-Meta-Attachment-Id": "5a4d1a8a6d92880012ad2923",
+        "bucket": "aws-bucket",
+        "X-Amz-Algorithm": "aws-algorithm",
+        "X-Amz-Credential": "aws-temp-key",
+        "X-Amz-Date": "20180103T180146Z",
+        "Policy": "aws-temp-policy-jwt",
+        "X-Amz-Signature": "aws-temp-signature-value"
+      }
+    }
+  }
+}

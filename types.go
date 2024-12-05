@@ -67,6 +67,27 @@ type CreateDraftMessageResponse struct {
 	} `json:"data"`
 }
 
+type UpdateDraftMessageRequest struct {
+	Channel MessageChannel `json:"channel"` // REQUIRED
+	SendAt  string         `json:"send_at"`
+}
+
+type UpdateDraftMessageResponse struct {
+	Data struct {
+		Id         string `json:"id"`
+		Type       string `json:"type"`
+		Attributes struct {
+			Channel    string    `json:"channel"`
+			Body       string    `json:"body"`
+			Status     string    `json:"status"`
+			CreatedAt  time.Time `json:"createdAt"`
+			UpdatedAt  time.Time `json:"updatedAt"`
+			ModifiedAt time.Time `json:"modifiedAt"`
+		} `json:"attributes"`
+		Relationships Relationships `json:"relationships"`
+	} `json:"data"`
+}
+
 type GetCustomerByExternalIDResponse struct {
 	Data struct {
 		Type       string `json:"type"`
@@ -157,6 +178,62 @@ type GetCustomerByExternalIDResponse struct {
 		Links         Links         `json:"links"`
 	} `json:"data"`
 }
+
+type CreateAttachmentRequest struct {
+	Name          string `json:"name"`
+	ContentType   string `json:"content_type"`
+	ContentLength int64  `json:"content_length"`
+}
+
+type CreateAttachmentResponse struct {
+	Data struct {
+		Id         string `json:"id"`
+		Type       string `json:"type"`
+		Attributes struct {
+			Name          string `json:"name"`
+			ContentType   string `json:"contentType"`
+			ContentLength int    `json:"contentLength"`
+			Uploaded      bool   `json:"uploaded"`
+			Redacted      bool   `json:"redacted"`
+		} `json:"attributes"`
+		Relationships Relationships `json:"relationships"`
+		Links         struct {
+			Self    string `json:"self"`
+			Related string `json:"related"`
+		} `json:"links"`
+	} `json:"data"`
+	Meta struct {
+		Upload struct {
+			Url    string `json:"url"`
+			Fields struct {
+				Key                  string `json:"key"`
+				Acl                  string `json:"acl"`
+				ContentType          string `json:"Content-Type"`
+				XAmzMetaAttachmentId string `json:"X-Amz-Meta-Attachment-Id"`
+				Bucket               string `json:"bucket"`
+				XAmzAlgorithm        string `json:"X-Amz-Algorithm"`
+				XAmzCredential       string `json:"X-Amz-Credential"`
+				XAmzDate             string `json:"X-Amz-Date"`
+				Policy               string `json:"Policy"`
+				XAmzSignature        string `json:"X-Amz-Signature"`
+			} `json:"fields"`
+		} `json:"upload"`
+	} `json:"meta"`
+}
+
+type UploadAttachmentRequest struct {
+	// UploadURL is the presigned URL to upload the attachment
+	// this is obtained from CreateAttachmentResponse.Data.Links.Related
+	UploadURL string `json:"-"`
+
+	// ContentType is the mimetype of the file
+	ContentType string `json:"-"`
+
+	// Data is the actual file contents to upload
+	Data []byte `json:"-"`
+}
+
+// ----------------- Common shared structures between requests
 
 type Links struct {
 	Self string `json:"self"`

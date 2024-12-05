@@ -134,4 +134,44 @@ var _ = Describe("Kustomer SDK", func() {
 			Expect(resp.Data.Type).To(Equal("draft"))
 		})
 	})
+
+	Context("UpdateDraftMessage", func() {
+		It("updates a draft message", func() {
+			apiResp, err := os.ReadFile("./test-assets/responses/update_draft_message.json")
+			Expect(err).To(BeNil())
+
+			req := &UpdateDraftMessageRequest{
+				Channel: MessageChannelSMS,
+				SendAt:  time.Now().UTC().Add(time.Minute).Format(time.RFC3339),
+			}
+
+			k := KustomerWithMockResponse(http.StatusOK, apiResp)
+			resp, err := k.UpdateDraftMessage(context.Background(), "123", req)
+			Expect(err).To(BeNil())
+			Expect(resp).ToNot(BeNil())
+			Expect(resp.Data.Id).To(Equal("5823e4d3bff98a100085320e"))
+			Expect(resp.Data.Type).To(Equal("draft"))
+		})
+	})
+
+	Context("CreateDraftAttachment", func() {
+		It("creates an attachment", func() {
+			apiResp, err := os.ReadFile("./test-assets/responses/create_attachment.json")
+			Expect(err).To(BeNil())
+
+			req := &CreateAttachmentRequest{
+				Name:          "requisition.pdf",
+				ContentType:   "application/pdf",
+				ContentLength: 12345,
+			}
+
+			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
+			resp, err := k.CreateDraftAttachment(context.Background(), req)
+			Expect(err).To(BeNil())
+			Expect(resp).ToNot(BeNil())
+
+			// This is the URL where uploads will be POSTed to
+			Expect(resp.Data.Links.Related).To(Equal("http://www.cool.com"))
+		})
+	})
 })
