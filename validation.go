@@ -1,8 +1,9 @@
 package kustomersdk
 
 import (
-	"github.com/pkg/errors"
 	"slices"
+
+	"github.com/pkg/errors"
 )
 
 func validateCreateConversationRequest(req *CreateConversationRequest) error {
@@ -46,6 +47,50 @@ func validateCreateDraftMessageRequest(req *CreateDraftMessageRequest) error {
 		if !slices.Contains(apps, req.App) {
 			return errors.New("App is invalid")
 		}
+	}
+
+	return nil
+}
+
+func validateUpdateDraftMessageRequest(req *UpdateDraftMessageRequest) error {
+	if req.Channel == "" {
+		return errors.New("Channel cannot be empty")
+	}
+
+	if req.SendAt == "" {
+		return errors.New("SendAt must be specified.")
+	}
+
+	return nil
+}
+
+func validateAttachmentRequest(req *CreateAttachmentRequest) error {
+	if req.Name == "" {
+		return errors.New("Name cannot be empty")
+	}
+
+	if req.ContentType == "" {
+		return errors.New("ContentType cannot be nil")
+	}
+
+	if req.ContentLength == 0 {
+		return errors.New("ContentLength cannot be 0")
+	}
+
+	return nil
+}
+
+func validateUploadAttachmentRequest(req *UploadAttachmentRequest) error {
+	if req.UploadURL == "" {
+		return errors.New("UploadURL cannot be empty")
+	}
+
+	if req.ContentType == "" {
+		return errors.New("ContentType cannot be empty")
+	}
+
+	if len(req.Data) == 0 {
+		return errors.New("Data cannot be empty")
 	}
 
 	return nil

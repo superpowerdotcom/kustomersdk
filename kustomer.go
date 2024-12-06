@@ -25,6 +25,18 @@ type IKustomer interface {
 	// CreateDraftMessage creates a new draft message for a Kustomer. CreateConversation must be called
 	// before calling this method, and the conversation ID must be passed in the request
 	CreateDraftMessage(ctx context.Context, customerID string, req *CreateDraftMessageRequest) (*CreateDraftMessageResponse, error)
+
+	// UpdateDraftMessage updates an existing draft message
+	// This method is used to update the send time of a draft message after attachments have been uploaded
+	UpdateDraftMessage(ctx context.Context, draftID string, req *UpdateDraftMessageRequest) (*UpdateDraftMessageResponse, error)
+
+	// CreateDraftAttachment creates a new attachment for a draft message
+	// The draft must first be created before calling this method
+	CreateDraftAttachment(ctx context.Context, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error)
+
+	// UploadAttachment creates a new attachment for a draft message
+	// CreateDraftAttachment must be called first to get the signed URL that  this request will be POSTed to
+	UploadAttachment(ctx context.Context, req *UploadAttachmentRequest) error
 }
 
 type Options struct {
@@ -73,8 +85,8 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	resp := &GetCustomerByExternalIDResponse{}
 
 	endpoint := fmt.Sprintf("%s/customers/externalId=%s", BaseAPIURL, externalID)
-	_, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
-	if err != nil {
+
+	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to get customer by external ID '%s'", externalID)
 	}
 
@@ -95,8 +107,7 @@ func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversati
 	resp := &CreateConversationResponse{}
 	endpoint := fmt.Sprintf("%s/customers/%s/conversation", BaseAPIURL, req.ID)
 
-	_, err = k.call(ctx, endpoint, http.MethodPost, body, resp, headers...)
-	if err != nil {
+	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", req.ID)
 	}
 
@@ -117,12 +128,70 @@ func (k *Kustomer) CreateDraftMessage(ctx context.Context, customerID string, re
 	resp := &CreateDraftMessageResponse{}
 	endpoint := fmt.Sprintf("%s/customers/%s/drafts", BaseAPIURL, customerID)
 
-	_, err = k.call(ctx, endpoint, http.MethodPost, body, resp, headers...)
-	if err != nil {
+	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to create draft message for conversation '%s' and recipient '%s'", req.Conversation, req.To)
 	}
 
 	return resp, nil
+}
+
+func (k *Kustomer) UpdateDraftMessage(ctx context.Context, draftID string, req *UpdateDraftMessageRequest) (*UpdateDraftMessageResponse, error) {
+	if err := validateUpdateDraftMessageRequest(req); err != nil {
+		return nil, errors.Wrap(err, "failed to validate UpdateDraftMessageRequest")
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal UpdateDraftMessageRequest")
+	}
+
+	headers := k.getHeaders()
+	resp := &UpdateDraftMessageResponse{}
+	endpoint := fmt.Sprintf("%s/drafts/%s", BaseAPIURL, draftID)
+
+	if _, err := k.call(ctx, endpoint, http.MethodPut, body, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to update draft message with ID '%s'", draftID)
+	}
+
+	return resp, nil
+}
+
+func (k *Kustomer) CreateDraftAttachment(ctx context.Context, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error) {
+	if err := validateAttachmentRequest(req); err != nil {
+		return nil, errors.Wrap(err, "failed to validate CreateAttachmentRequest")
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal CreateAttachmentRequest")
+	}
+
+	headers := k.getHeaders()
+	resp := &CreateAttachmentResponse{}
+	endpoint := fmt.Sprintf("%s/attachments", BaseAPIURL)
+
+	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to create attachment for file '%s'", req.Name)
+	}
+
+	return resp, nil
+}
+
+func (k *Kustomer) UploadAttachment(ctx context.Context, req *UploadAttachmentRequest) error {
+	if err := validateUploadAttachmentRequest(req); err != nil {
+		return errors.Wrap(err, "failed to validate UploadAttachmentRequest")
+	}
+
+	headers := []http.Header{
+		{"Content-Type": []string{req.ContentType}},
+		{"Accept": []string{"application/json"}},
+	}
+
+	if _, err := k.call(ctx, req.UploadURL, http.MethodPut, req.Data, nil, headers...); err != nil {
+		return errors.Wrapf(err, "unable to upload file to destination '%s'", req.UploadURL)
+	}
+
+	return nil
 }
 
 // getHeaders returns all necessary headers for performing an HTTP call to Kustomer
