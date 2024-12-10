@@ -105,7 +105,7 @@ func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversati
 
 	headers := k.getHeaders()
 	resp := &CreateConversationResponse{}
-	endpoint := fmt.Sprintf("%s/customers/%s/conversation", BaseAPIURL, req.ID)
+	endpoint := fmt.Sprintf("%s/customers/%s/conversations", BaseAPIURL, req.ID)
 
 	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", req.ID)
