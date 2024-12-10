@@ -49,7 +49,7 @@ type CreateDraftMessageRequest struct {
 	To           string         `json:"to,omitempty"`
 	From         string         `json:"from,omitempty"`
 	Body         string         `json:"body,omitempty"`
-	SendAt       string         `json:"send_at,omitempty"`
+	SendAt       string         `json:"sendAt,omitempty"`
 }
 
 type CreateDraftMessageResponse struct {
@@ -69,7 +69,7 @@ type CreateDraftMessageResponse struct {
 
 type UpdateDraftMessageRequest struct {
 	Channel MessageChannel `json:"channel"` // REQUIRED
-	SendAt  string         `json:"send_at"`
+	SendAt  string         `json:"sendAt"`
 }
 
 type UpdateDraftMessageResponse struct {
@@ -181,8 +181,8 @@ type GetCustomerByExternalIDResponse struct {
 
 type CreateAttachmentRequest struct {
 	Name          string `json:"name"`
-	ContentType   string `json:"content_type"`
-	ContentLength int64  `json:"content_length"`
+	ContentType   string `json:"contentType"`
+	ContentLength int64  `json:"contentLength"`
 }
 
 type CreateAttachmentResponse struct {
