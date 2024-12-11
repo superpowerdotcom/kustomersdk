@@ -135,7 +135,7 @@ var _ = Describe("Kustomer SDK", func() {
 	})
 
 	Context("UpdateDraftMessage", func() {
-		It("updates a draft message", func() {
+		It("updates a draft SMS message", func() {
 			apiResp, err := os.ReadFile("./test-assets/responses/update_draft_message.json")
 			Expect(err).To(BeNil())
 

@@ -28,6 +28,7 @@ type MessageApp string
 const (
 	MessageAppTwilio  MessageApp = "twilio"
 	MessageAppZipwhip MessageApp = "zipwhip"
+	MessageAppGmail   MessageApp = "gmail"
 )
 
 type CreateConversationRequest struct {

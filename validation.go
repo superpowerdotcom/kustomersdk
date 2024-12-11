@@ -31,7 +31,7 @@ func validateCreateDraftSMSMessageRequest(req *CreateDraftSMSMessageRequest) err
 
 	channels := []MessageChannel{MessageChannelSMS}
 	if !slices.Contains(channels, req.Channel) {
-		return errors.New("Channel must be one of 'sms', 'email'")
+		return errors.New("Channel must be 'sms'")
 	}
 
 	if req.Body == "" {
@@ -55,7 +55,7 @@ func validateCreateDraftEmailMessageRequest(req *CreateDraftEmailMessageRequest)
 
 	channels := []MessageChannel{MessageChannelEmail}
 	if !slices.Contains(channels, req.Channel) {
-		return errors.New("Channel must be one of 'sms', 'email'")
+		return errors.New("Channel must be 'email'")
 	}
 
 	if req.Body == "" {
@@ -63,7 +63,7 @@ func validateCreateDraftEmailMessageRequest(req *CreateDraftEmailMessageRequest)
 	}
 
 	if req.App != "" {
-		apps := []MessageApp{MessageAppTwilio, MessageAppZipwhip}
+		apps := []MessageApp{MessageAppGmail}
 		if !slices.Contains(apps, req.App) {
 			return errors.New("App is invalid")
 		}
