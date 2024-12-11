@@ -12,8 +12,8 @@ const (
 type ConversationStatus string
 
 const (
-	ConversationStatusOpen   ConversationStatus = "open"
-	ConversationStatusClosed ConversationStatus = "closed"
+	ConversationStatusOpen ConversationStatus = "open"
+	ConversationStatusDone ConversationStatus = "done"
 )
 
 type MessageChannel string
@@ -28,10 +28,10 @@ type MessageApp string
 const (
 	MessageAppTwilio  MessageApp = "twilio"
 	MessageAppZipwhip MessageApp = "zipwhip"
+	MessageAppGmail   MessageApp = "gmail"
 )
 
 type CreateConversationRequest struct {
-	ID        string                `json:"id"`
 	Direction ConversationDirection `json:"direction,omitempty"`
 	Status    ConversationStatus    `json:"status,omitempty"`
 }
@@ -42,14 +42,29 @@ type CreateConversationResponse struct {
 	} `json:"data"`
 }
 
-type CreateDraftMessageRequest struct {
+type CreateDraftSMSMessageRequest struct {
 	App          MessageApp     `json:"app,omitempty"`
 	Channel      MessageChannel `json:"channel"` // REQUIRED
 	Conversation string         `json:"conversation,omitempty"`
 	To           string         `json:"to,omitempty"`
 	From         string         `json:"from,omitempty"`
 	Body         string         `json:"body,omitempty"`
-	SendAt       string         `json:"send_at,omitempty"`
+	SendAt       string         `json:"sendAt,omitempty"`
+}
+
+type CreateDraftEmailMessageRequest struct {
+	App          MessageApp      `json:"app,omitempty"`
+	Channel      MessageChannel  `json:"channel"` // REQUIRED
+	Conversation string          `json:"conversation,omitempty"`
+	To           []*EmailContact `json:"to,omitempty"`
+	From         *EmailContact   `json:"from,omitempty"`
+	Body         string          `json:"body,omitempty"`
+	SendAt       string          `json:"sendAt,omitempty"`
+}
+
+type EmailContact struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 type CreateDraftMessageResponse struct {
@@ -69,7 +84,7 @@ type CreateDraftMessageResponse struct {
 
 type UpdateDraftMessageRequest struct {
 	Channel MessageChannel `json:"channel"` // REQUIRED
-	SendAt  string         `json:"send_at"`
+	SendAt  string         `json:"sendAt"`
 }
 
 type UpdateDraftMessageResponse struct {
@@ -181,8 +196,8 @@ type GetCustomerByExternalIDResponse struct {
 
 type CreateAttachmentRequest struct {
 	Name          string `json:"name"`
-	ContentType   string `json:"content_type"`
-	ContentLength int64  `json:"content_length"`
+	ContentType   string `json:"contentType"`
+	ContentLength int64  `json:"contentLength"`
 }
 
 type CreateAttachmentResponse struct {

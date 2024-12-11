@@ -7,10 +7,6 @@ import (
 )
 
 func validateCreateConversationRequest(req *CreateConversationRequest) error {
-	if req.ID == "" {
-		return errors.New("ID cannot be empty")
-	}
-
 	if req.Direction != "" {
 		ways := []ConversationDirection{ConversationDirectionIn, ConversationDirectionOut}
 		if !slices.Contains(ways, req.Direction) {
@@ -19,7 +15,7 @@ func validateCreateConversationRequest(req *CreateConversationRequest) error {
 	}
 
 	if req.Status != "" {
-		statuses := []ConversationStatus{ConversationStatusOpen, ConversationStatusClosed}
+		statuses := []ConversationStatus{ConversationStatusOpen, ConversationStatusDone}
 		if !slices.Contains(statuses, req.Status) {
 			return errors.New("Status is invalid")
 		}
@@ -28,14 +24,14 @@ func validateCreateConversationRequest(req *CreateConversationRequest) error {
 	return nil
 }
 
-func validateCreateDraftMessageRequest(req *CreateDraftMessageRequest) error {
+func validateCreateDraftSMSMessageRequest(req *CreateDraftSMSMessageRequest) error {
 	if req.Channel == "" {
 		return errors.New("Channel cannot be empty")
 	}
 
-	channels := []MessageChannel{MessageChannelSMS, MessageChannelEmail}
+	channels := []MessageChannel{MessageChannelSMS}
 	if !slices.Contains(channels, req.Channel) {
-		return errors.New("Channel must be one of 'sms', 'email'")
+		return errors.New("Channel must be 'sms'")
 	}
 
 	if req.Body == "" {
@@ -47,6 +43,52 @@ func validateCreateDraftMessageRequest(req *CreateDraftMessageRequest) error {
 		if !slices.Contains(apps, req.App) {
 			return errors.New("App is invalid")
 		}
+	}
+
+	return nil
+}
+
+func validateCreateDraftEmailMessageRequest(req *CreateDraftEmailMessageRequest) error {
+	if req.Channel == "" {
+		return errors.New("Channel cannot be empty")
+	}
+
+	channels := []MessageChannel{MessageChannelEmail}
+	if !slices.Contains(channels, req.Channel) {
+		return errors.New("Channel must be 'email'")
+	}
+
+	if req.Body == "" {
+		return errors.New("Body cannot be empty")
+	}
+
+	if req.App != "" {
+		apps := []MessageApp{MessageAppGmail}
+		if !slices.Contains(apps, req.App) {
+			return errors.New("App is invalid")
+		}
+	}
+
+	if req.To == nil {
+		return errors.New("To cannot be nil")
+	}
+
+	for _, recipient := range req.To {
+		if recipient.Email == "" {
+			return errors.New("To's email cannot be empty")
+		}
+	}
+
+	if req.From == nil {
+		return errors.New("From cannot be nil")
+	}
+
+	if req.From.Email == "" {
+		return errors.New("From's email cannot be empty")
+	}
+
+	if req.From.Name == "" {
+		return errors.New("From's name cannot be empty")
 	}
 
 	return nil

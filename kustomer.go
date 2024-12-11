@@ -20,11 +20,15 @@ type IKustomer interface {
 	GetCustomerByExternalID(ctx context.Context, databaseID string) (*GetCustomerByExternalIDResponse, error)
 
 	// CreateConversation creates a new conversation for a Kustomer
-	CreateConversation(ctx context.Context, req *CreateConversationRequest) (*CreateConversationResponse, error)
+	CreateConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error)
 
-	// CreateDraftMessage creates a new draft message for a Kustomer. CreateConversation must be called
+	// CreateDraftSMSMessage creates a new draft message for a Kustomer. CreateConversation must be called
 	// before calling this method, and the conversation ID must be passed in the request
-	CreateDraftMessage(ctx context.Context, customerID string, req *CreateDraftMessageRequest) (*CreateDraftMessageResponse, error)
+	CreateDraftSMSMessage(ctx context.Context, customerID string, req *CreateDraftSMSMessageRequest) (*CreateDraftMessageResponse, error)
+
+	// CreateDraftEmailMessage creates a new draft message for a Kustomer. CreateConversation must be called
+	// before calling this method, and the conversation ID must be passed in the request
+	CreateDraftEmailMessage(ctx context.Context, customerID string, req *CreateDraftEmailMessageRequest) (*CreateDraftMessageResponse, error)
 
 	// UpdateDraftMessage updates an existing draft message
 	// This method is used to update the send time of a draft message after attachments have been uploaded
@@ -93,7 +97,7 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	return resp, nil
 }
 
-func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversationRequest) (*CreateConversationResponse, error) {
+func (k *Kustomer) CreateConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error) {
 	if err := validateCreateConversationRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateConversationRequest")
 	}
@@ -105,23 +109,23 @@ func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversati
 
 	headers := k.getHeaders()
 	resp := &CreateConversationResponse{}
-	endpoint := fmt.Sprintf("%s/customers/%s/conversations", BaseAPIURL, req.ID)
+	endpoint := fmt.Sprintf("%s/customers/%s/conversations", BaseAPIURL, customerID)
 
 	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
-		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", req.ID)
+		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", customerID)
 	}
 
 	return resp, nil
 }
 
-func (k *Kustomer) CreateDraftMessage(ctx context.Context, customerID string, req *CreateDraftMessageRequest) (*CreateDraftMessageResponse, error) {
-	if err := validateCreateDraftMessageRequest(req); err != nil {
-		return nil, errors.Wrap(err, "failed to validate CreateDraftMessageRequest")
+func (k *Kustomer) CreateDraftSMSMessage(ctx context.Context, customerID string, req *CreateDraftSMSMessageRequest) (*CreateDraftMessageResponse, error) {
+	if err := validateCreateDraftSMSMessageRequest(req); err != nil {
+		return nil, errors.Wrap(err, "failed to validate CreateDraftSMSMessageRequest")
 	}
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to marshal CreateDraftMessageRequest")
+		return nil, errors.Wrap(err, "unable to marshal CreateDraftSMSMessageRequest")
 	}
 
 	headers := k.getHeaders()
@@ -130,6 +134,27 @@ func (k *Kustomer) CreateDraftMessage(ctx context.Context, customerID string, re
 
 	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to create draft message for conversation '%s' and recipient '%s'", req.Conversation, req.To)
+	}
+
+	return resp, nil
+}
+
+func (k *Kustomer) CreateDraftEmailMessage(ctx context.Context, customerID string, req *CreateDraftEmailMessageRequest) (*CreateDraftMessageResponse, error) {
+	if err := validateCreateDraftEmailMessageRequest(req); err != nil {
+		return nil, errors.Wrap(err, "failed to validate CreateDraftEmailMessageRequest")
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal CreateDraftEmailMessageRequest")
+	}
+
+	headers := k.getHeaders()
+	resp := &CreateDraftMessageResponse{}
+	endpoint := fmt.Sprintf("%s/customers/%s/drafts", BaseAPIURL, customerID)
+
+	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to create draft message for conversation '%s' and recipient '%s'", req.Conversation, req.To[0].Email)
 	}
 
 	return resp, nil
@@ -203,7 +228,7 @@ func (k *Kustomer) getHeaders() []http.Header {
 }
 
 func (k *Kustomer) call(
-	_ context.Context,
+	ctx context.Context,
 	endpoint,
 	method string,
 	requestBody []byte,
@@ -221,7 +246,7 @@ func (k *Kustomer) call(
 	bodyBuffer := bytes.NewBuffer(requestBody)
 
 	// Generate request
-	request, err := http.NewRequest(method, endpoint, bodyBuffer)
+	request, err := http.NewRequestWithContext(ctx, method, endpoint, bodyBuffer)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create http request")
 	}
