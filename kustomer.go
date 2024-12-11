@@ -20,7 +20,7 @@ type IKustomer interface {
 	GetCustomerByExternalID(ctx context.Context, databaseID string) (*GetCustomerByExternalIDResponse, error)
 
 	// CreateConversation creates a new conversation for a Kustomer
-	CreateConversation(ctx context.Context, req *CreateConversationRequest) (*CreateConversationResponse, error)
+	CreateConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error)
 
 	// CreateDraftMessage creates a new draft message for a Kustomer. CreateConversation must be called
 	// before calling this method, and the conversation ID must be passed in the request
@@ -93,7 +93,7 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	return resp, nil
 }
 
-func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversationRequest) (*CreateConversationResponse, error) {
+func (k *Kustomer) CreateConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error) {
 	if err := validateCreateConversationRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateConversationRequest")
 	}
@@ -105,10 +105,10 @@ func (k *Kustomer) CreateConversation(ctx context.Context, req *CreateConversati
 
 	headers := k.getHeaders()
 	resp := &CreateConversationResponse{}
-	endpoint := fmt.Sprintf("%s/customers/%s/conversations", BaseAPIURL, req.ID)
+	endpoint := fmt.Sprintf("%s/customers/%s/conversations", BaseAPIURL, customerID)
 
 	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
-		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", req.ID)
+		return nil, errors.Wrapf(err, "unable to create conversation for kustomer '%s'", customerID)
 	}
 
 	return resp, nil

@@ -31,7 +31,6 @@ const (
 )
 
 type CreateConversationRequest struct {
-	ID        string                `json:"id"`
 	Direction ConversationDirection `json:"direction,omitempty"`
 	Status    ConversationStatus    `json:"status,omitempty"`
 }

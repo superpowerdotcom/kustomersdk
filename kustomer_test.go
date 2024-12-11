@@ -101,13 +101,12 @@ var _ = Describe("Kustomer SDK", func() {
 			Expect(err).To(BeNil())
 
 			req := &CreateConversationRequest{
-				ID:        "123",
 				Direction: ConversationDirectionOut,
 				Status:    ConversationStatusOpen,
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
-			resp, err := k.CreateConversation(context.Background(), req)
+			resp, err := k.CreateConversation(context.Background(), "123", req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 			Expect(resp.Data.Id).To(Equal("58228e05d4e96711004eccb7"))

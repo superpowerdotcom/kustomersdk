@@ -19,7 +19,7 @@ func validateCreateConversationRequest(req *CreateConversationRequest) error {
 	}
 
 	if req.Status != "" {
-		statuses := []ConversationStatus{ConversationStatusOpen, ConversationStatusClosed}
+		statuses := []ConversationStatus{ConversationStatusOpen, ConversationStatusDone}
 		if !slices.Contains(statuses, req.Status) {
 			return errors.New("Status is invalid")
 		}
