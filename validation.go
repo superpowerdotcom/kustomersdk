@@ -24,12 +24,12 @@ func validateCreateConversationRequest(req *CreateConversationRequest) error {
 	return nil
 }
 
-func validateCreateDraftMessageRequest(req *CreateDraftMessageRequest) error {
+func validateCreateDraftSMSMessageRequest(req *CreateDraftSMSMessageRequest) error {
 	if req.Channel == "" {
 		return errors.New("Channel cannot be empty")
 	}
 
-	channels := []MessageChannel{MessageChannelSMS, MessageChannelEmail}
+	channels := []MessageChannel{MessageChannelSMS}
 	if !slices.Contains(channels, req.Channel) {
 		return errors.New("Channel must be one of 'sms', 'email'")
 	}
@@ -43,6 +43,52 @@ func validateCreateDraftMessageRequest(req *CreateDraftMessageRequest) error {
 		if !slices.Contains(apps, req.App) {
 			return errors.New("App is invalid")
 		}
+	}
+
+	return nil
+}
+
+func validateCreateDraftEmailMessageRequest(req *CreateDraftEmailMessageRequest) error {
+	if req.Channel == "" {
+		return errors.New("Channel cannot be empty")
+	}
+
+	channels := []MessageChannel{MessageChannelEmail}
+	if !slices.Contains(channels, req.Channel) {
+		return errors.New("Channel must be one of 'sms', 'email'")
+	}
+
+	if req.Body == "" {
+		return errors.New("Body cannot be empty")
+	}
+
+	if req.App != "" {
+		apps := []MessageApp{MessageAppTwilio, MessageAppZipwhip}
+		if !slices.Contains(apps, req.App) {
+			return errors.New("App is invalid")
+		}
+	}
+
+	if req.To == nil {
+		return errors.New("To cannot be nil")
+	}
+
+	for _, recipient := range req.To {
+		if recipient.Email == "" {
+			return errors.New("To's email cannot be empty")
+		}
+	}
+
+	if req.From == nil {
+		return errors.New("From cannot be nil")
+	}
+
+	if req.From.Email == "" {
+		return errors.New("From's email cannot be empty")
+	}
+
+	if req.From.Name == "" {
+		return errors.New("From's name cannot be empty")
 	}
 
 	return nil

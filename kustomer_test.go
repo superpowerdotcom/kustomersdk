@@ -113,12 +113,12 @@ var _ = Describe("Kustomer SDK", func() {
 		})
 	})
 
-	Context("CreateDraftMessage", func() {
+	Context("CreateDraftSMSMessage", func() {
 		It("creates a draft message", func() {
 			apiResp, err := os.ReadFile("./test-assets/responses/create_draft_message.json")
 			Expect(err).To(BeNil())
 
-			req := &CreateDraftMessageRequest{
+			req := &CreateDraftSMSMessageRequest{
 				App:     MessageAppTwilio,
 				Channel: MessageChannelSMS,
 				Body:    "Please schedule your blood draw",
@@ -126,7 +126,7 @@ var _ = Describe("Kustomer SDK", func() {
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
-			resp, err := k.CreateDraftMessage(context.Background(), "123", req)
+			resp, err := k.CreateDraftSMSMessage(context.Background(), "123", req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 			Expect(resp.Data.Id).To(Equal("5823e4d3bff98a100085320e"))

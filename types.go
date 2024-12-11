@@ -41,7 +41,7 @@ type CreateConversationResponse struct {
 	} `json:"data"`
 }
 
-type CreateDraftMessageRequest struct {
+type CreateDraftSMSMessageRequest struct {
 	App          MessageApp     `json:"app,omitempty"`
 	Channel      MessageChannel `json:"channel"` // REQUIRED
 	Conversation string         `json:"conversation,omitempty"`
@@ -49,6 +49,21 @@ type CreateDraftMessageRequest struct {
 	From         string         `json:"from,omitempty"`
 	Body         string         `json:"body,omitempty"`
 	SendAt       string         `json:"sendAt,omitempty"`
+}
+
+type CreateDraftEmailMessageRequest struct {
+	App          MessageApp      `json:"app,omitempty"`
+	Channel      MessageChannel  `json:"channel"` // REQUIRED
+	Conversation string          `json:"conversation,omitempty"`
+	To           []*EmailContact `json:"to,omitempty"`
+	From         *EmailContact   `json:"from,omitempty"`
+	Body         string          `json:"body,omitempty"`
+	SendAt       string          `json:"sendAt,omitempty"`
+}
+
+type EmailContact struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 type CreateDraftMessageResponse struct {
