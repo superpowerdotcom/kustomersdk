@@ -7,10 +7,6 @@ import (
 )
 
 func validateCreateConversationRequest(req *CreateConversationRequest) error {
-	if req.ID == "" {
-		return errors.New("ID cannot be empty")
-	}
-
 	if req.Direction != "" {
 		ways := []ConversationDirection{ConversationDirectionIn, ConversationDirectionOut}
 		if !slices.Contains(ways, req.Direction) {
