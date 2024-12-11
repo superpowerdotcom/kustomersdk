@@ -12,8 +12,8 @@ const (
 type ConversationStatus string
 
 const (
-	ConversationStatusOpen   ConversationStatus = "open"
-	ConversationStatusClosed ConversationStatus = "closed"
+	ConversationStatusOpen ConversationStatus = "open"
+	ConversationStatusDone ConversationStatus = "done"
 )
 
 type MessageChannel string
