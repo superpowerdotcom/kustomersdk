@@ -228,7 +228,7 @@ func (k *Kustomer) getHeaders() []http.Header {
 }
 
 func (k *Kustomer) call(
-	_ context.Context,
+	ctx context.Context,
 	endpoint,
 	method string,
 	requestBody []byte,
@@ -246,7 +246,7 @@ func (k *Kustomer) call(
 	bodyBuffer := bytes.NewBuffer(requestBody)
 
 	// Generate request
-	request, err := http.NewRequest(method, endpoint, bodyBuffer)
+	request, err := http.NewRequestWithContext(ctx, method, endpoint, bodyBuffer)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create http request")
 	}
