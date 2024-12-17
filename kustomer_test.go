@@ -95,7 +95,7 @@ var _ = Describe("Kustomer SDK", func() {
 		})
 	})
 
-	Context("CreateConversation", func() {
+	Context("createConversation", func() {
 		It("creates a conversation", func() {
 			apiResp, err := os.ReadFile("./test-assets/responses/create_conversation.json")
 			Expect(err).To(BeNil())
@@ -106,14 +106,14 @@ var _ = Describe("Kustomer SDK", func() {
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
-			resp, err := k.CreateConversation(context.Background(), "123", req)
+			resp, err := k.createConversation(context.Background(), "123", req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 			Expect(resp.Data.Id).To(Equal("58228e05d4e96711004eccb7"))
 		})
 	})
 
-	Context("CreateDraftSMSMessage", func() {
+	Context("createDraftSMSMessage", func() {
 		It("creates a draft message", func() {
 			apiResp, err := os.ReadFile("./test-assets/responses/create_draft_message.json")
 			Expect(err).To(BeNil())
@@ -126,7 +126,7 @@ var _ = Describe("Kustomer SDK", func() {
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
-			resp, err := k.CreateDraftSMSMessage(context.Background(), "123", req)
+			resp, err := k.createDraftSMSMessage(context.Background(), "123", req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 			Expect(resp.Data.Id).To(Equal("5823e4d3bff98a100085320e"))
@@ -134,7 +134,7 @@ var _ = Describe("Kustomer SDK", func() {
 		})
 	})
 
-	Context("UpdateDraftMessage", func() {
+	Context("updateDraftMessage", func() {
 		It("updates a draft SMS message", func() {
 			apiResp, err := os.ReadFile("./test-assets/responses/update_draft_message.json")
 			Expect(err).To(BeNil())
@@ -145,7 +145,7 @@ var _ = Describe("Kustomer SDK", func() {
 			}
 
 			k := KustomerWithMockResponse(http.StatusOK, apiResp)
-			resp, err := k.UpdateDraftMessage(context.Background(), "123", req)
+			resp, err := k.updateDraftMessage(context.Background(), "123", req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 			Expect(resp.Data.Id).To(Equal("5823e4d3bff98a100085320e"))
@@ -153,7 +153,7 @@ var _ = Describe("Kustomer SDK", func() {
 		})
 	})
 
-	Context("CreateDraftAttachment", func() {
+	Context("createDraftAttachment", func() {
 		It("creates an attachment", func() {
 			apiResp, err := os.ReadFile("./test-assets/responses/create_attachment.json")
 			Expect(err).To(BeNil())
@@ -165,7 +165,7 @@ var _ = Describe("Kustomer SDK", func() {
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
-			resp, err := k.CreateDraftAttachment(context.Background(), req)
+			resp, err := k.createDraftAttachment(context.Background(), req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 
