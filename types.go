@@ -31,9 +31,28 @@ const (
 	MessageAppGmail   MessageApp = "gmail"
 )
 
+type SendEmailRequest struct {
+	To          []*EmailContact
+	From        *EmailContact
+	Subject     string
+	TemplateID  string
+	BodyText    string
+	BodyHTML    string
+	Attachments []*Attachment
+}
+
+type SendSMSRequest struct {
+	To   string
+	From string
+	Body string
+}
+
 type CreateConversationRequest struct {
 	Direction ConversationDirection `json:"direction,omitempty"`
 	Status    ConversationStatus    `json:"status,omitempty"`
+
+	// Used for setting custom variables, ie. html content
+	Variables map[string]string `json:"custom,omitempty"`
 }
 
 type CreateConversationResponse struct {
@@ -58,6 +77,8 @@ type CreateDraftEmailMessageRequest struct {
 	Conversation string          `json:"conversation,omitempty"`
 	To           []*EmailContact `json:"to,omitempty"`
 	From         *EmailContact   `json:"from,omitempty"`
+	Subject      string          `json:"subject,omitempty"`
+	TemplateID   string          `json:"template,omitempty"`
 	Body         string          `json:"body,omitempty"`
 	SendAt       string          `json:"sendAt,omitempty"`
 }
@@ -192,6 +213,13 @@ type GetCustomerByExternalIDResponse struct {
 		Relationships Relationships `json:"relationships"`
 		Links         Links         `json:"links"`
 	} `json:"data"`
+}
+
+type Attachment struct {
+	Name          string `json:"name"`
+	ContentType   string `json:"contentType"`
+	ContentLength int64  `json:"contentLength"`
+	Content       []byte `json:"-"`
 }
 
 type CreateAttachmentRequest struct {

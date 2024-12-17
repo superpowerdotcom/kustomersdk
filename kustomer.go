@@ -19,28 +19,11 @@ type IKustomer interface {
 	// GetCustomerByExternalID retrieves a customer by their external ID, which in our case is the database ID
 	GetCustomerByExternalID(ctx context.Context, databaseID string) (*GetCustomerByExternalIDResponse, error)
 
-	// CreateConversation creates a new conversation for a Kustomer
-	CreateConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error)
+	// SendEmail sends an email to a Kustomer
+	SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error
 
-	// CreateDraftSMSMessage creates a new draft message for a Kustomer. CreateConversation must be called
-	// before calling this method, and the conversation ID must be passed in the request
-	CreateDraftSMSMessage(ctx context.Context, customerID string, req *CreateDraftSMSMessageRequest) (*CreateDraftMessageResponse, error)
-
-	// CreateDraftEmailMessage creates a new draft message for a Kustomer. CreateConversation must be called
-	// before calling this method, and the conversation ID must be passed in the request
-	CreateDraftEmailMessage(ctx context.Context, customerID string, req *CreateDraftEmailMessageRequest) (*CreateDraftMessageResponse, error)
-
-	// UpdateDraftMessage updates an existing draft message
-	// This method is used to update the send time of a draft message after attachments have been uploaded
-	UpdateDraftMessage(ctx context.Context, draftID string, req *UpdateDraftMessageRequest) (*UpdateDraftMessageResponse, error)
-
-	// CreateDraftAttachment creates a new attachment for a draft message
-	// The draft must first be created before calling this method
-	CreateDraftAttachment(ctx context.Context, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error)
-
-	// UploadAttachment creates a new attachment for a draft message
-	// CreateDraftAttachment must be called first to get the signed URL that  this request will be POSTed to
-	UploadAttachment(ctx context.Context, req *UploadAttachmentRequest) error
+	// SendSMS sends an SMS to a Kustomer
+	SendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error
 }
 
 type Options struct {
@@ -97,7 +80,119 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	return resp, nil
 }
 
-func (k *Kustomer) CreateConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error) {
+func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error {
+	if err := validateSendEmailRequest(req); err != nil {
+		return errors.Wrap(err, "failed to validate SendEmailRequest")
+	}
+
+	if req.Attachments == nil {
+		req.Attachments = make([]*Attachment, 0)
+	}
+
+	// Create Conversation
+	conversationReq := &CreateConversationRequest{
+		Direction: ConversationDirectionOut,
+		Status:    ConversationStatusOpen,
+		Variables: map[string]string{},
+	}
+	if req.BodyHTML != "" {
+		conversationReq.Variables["htmlContentStr"] = req.BodyHTML
+	}
+
+	conversationResp, err := k.createConversation(ctx, customerID, conversationReq)
+	if err != nil {
+		return errors.Wrap(err, "unable to create conversation")
+	}
+
+	// Create Draft Email Message
+	draftReq := &CreateDraftEmailMessageRequest{
+		Channel:      MessageChannelEmail,
+		App:          MessageAppGmail,
+		Conversation: conversationResp.Data.Id,
+		To:           req.To,
+		From:         req.From,
+		Body:         req.BodyText,
+		TemplateID:   req.TemplateID,
+		Subject:      req.Subject,
+	}
+
+	draftResp, err := k.createDraftEmailMessage(ctx, customerID, draftReq)
+	if err != nil {
+		return errors.Wrap(err, "unable to create draft email message")
+	}
+
+	for _, att := range req.Attachments {
+		contentType := http.DetectContentType(att.Content)
+
+		// Create Attachment Request, this will return a pre-signed URL
+		attachmentResp, err := k.createDraftAttachment(ctx, &CreateAttachmentRequest{
+			Name:          att.Name,
+			ContentType:   att.ContentType,
+			ContentLength: int64(len(att.Content)),
+		})
+		if err != nil {
+			return errors.Wrap(err, "unable to create draft attachment")
+		}
+
+		// Perform the actual upload to the pre-signed URL
+		uploadErr := k.uploadAttachment(ctx, &UploadAttachmentRequest{
+			UploadURL:   attachmentResp.Data.Links.Related,
+			ContentType: contentType,
+			Data:        att.Content,
+		})
+		if uploadErr != nil {
+			return errors.Wrap(uploadErr, "unable to upload attachment")
+		}
+	}
+
+	sendAt := time.Now().UTC().Add(time.Minute).Format(time.RFC3339)
+
+	// Update the draft message with the sendAt
+	_, err = k.updateDraftMessage(ctx, draftResp.Data.Id, &UpdateDraftMessageRequest{
+		SendAt:  sendAt,
+		Channel: MessageChannelEmail,
+	})
+	if err != nil {
+		return errors.Wrap(err, "unable to update draft message")
+	}
+
+	return nil
+}
+
+func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error {
+	if err := validateSendSMSRequest(req); err != nil {
+		return errors.Wrap(err, "failed to validate SendSMSRequest")
+	}
+
+	// Create a conversation under the customer, and then we'll take
+	// the resulting conversation ID and make a draft
+	convoResp, err := k.createConversation(ctx, customerID, &CreateConversationRequest{
+		Direction: ConversationDirectionOut,
+		Status:    ConversationStatusOpen,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
+	}
+
+	// Create Draft Message with a timestamp 1 minute into the future.
+	// Kustomer requires it to be sent this way for some silly reason.
+	_, err = k.createDraftSMSMessage(ctx, customerID, &CreateDraftSMSMessageRequest{
+		App:          MessageAppTwilio,
+		Channel:      MessageChannelSMS,
+		Conversation: convoResp.Data.Id,
+		To:           req.To,
+		From:         req.From,
+		Body:         req.Body,
+		SendAt:       time.Now().UTC().Add(time.Minute).Format(time.RFC3339),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to create draft message for conversation '%s'", convoResp.Data.Id)
+	}
+
+	return nil
+}
+
+func (k *Kustomer) createConversation(ctx context.Context, customerID string, req *CreateConversationRequest) (*CreateConversationResponse, error) {
 	if err := validateCreateConversationRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateConversationRequest")
 	}
@@ -118,7 +213,7 @@ func (k *Kustomer) CreateConversation(ctx context.Context, customerID string, re
 	return resp, nil
 }
 
-func (k *Kustomer) CreateDraftSMSMessage(ctx context.Context, customerID string, req *CreateDraftSMSMessageRequest) (*CreateDraftMessageResponse, error) {
+func (k *Kustomer) createDraftSMSMessage(ctx context.Context, customerID string, req *CreateDraftSMSMessageRequest) (*CreateDraftMessageResponse, error) {
 	if err := validateCreateDraftSMSMessageRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateDraftSMSMessageRequest")
 	}
@@ -139,7 +234,7 @@ func (k *Kustomer) CreateDraftSMSMessage(ctx context.Context, customerID string,
 	return resp, nil
 }
 
-func (k *Kustomer) CreateDraftEmailMessage(ctx context.Context, customerID string, req *CreateDraftEmailMessageRequest) (*CreateDraftMessageResponse, error) {
+func (k *Kustomer) createDraftEmailMessage(ctx context.Context, customerID string, req *CreateDraftEmailMessageRequest) (*CreateDraftMessageResponse, error) {
 	if err := validateCreateDraftEmailMessageRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateDraftEmailMessageRequest")
 	}
@@ -160,7 +255,7 @@ func (k *Kustomer) CreateDraftEmailMessage(ctx context.Context, customerID strin
 	return resp, nil
 }
 
-func (k *Kustomer) UpdateDraftMessage(ctx context.Context, draftID string, req *UpdateDraftMessageRequest) (*UpdateDraftMessageResponse, error) {
+func (k *Kustomer) updateDraftMessage(ctx context.Context, draftID string, req *UpdateDraftMessageRequest) (*UpdateDraftMessageResponse, error) {
 	if err := validateUpdateDraftMessageRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate UpdateDraftMessageRequest")
 	}
@@ -181,7 +276,7 @@ func (k *Kustomer) UpdateDraftMessage(ctx context.Context, draftID string, req *
 	return resp, nil
 }
 
-func (k *Kustomer) CreateDraftAttachment(ctx context.Context, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error) {
+func (k *Kustomer) createDraftAttachment(ctx context.Context, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error) {
 	if err := validateAttachmentRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateAttachmentRequest")
 	}
@@ -202,7 +297,7 @@ func (k *Kustomer) CreateDraftAttachment(ctx context.Context, req *CreateAttachm
 	return resp, nil
 }
 
-func (k *Kustomer) UploadAttachment(ctx context.Context, req *UploadAttachmentRequest) error {
+func (k *Kustomer) uploadAttachment(ctx context.Context, req *UploadAttachmentRequest) error {
 	if err := validateUploadAttachmentRequest(req); err != nil {
 		return errors.Wrap(err, "failed to validate UploadAttachmentRequest")
 	}
