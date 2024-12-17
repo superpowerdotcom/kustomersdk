@@ -137,3 +137,56 @@ func validateUploadAttachmentRequest(req *UploadAttachmentRequest) error {
 
 	return nil
 }
+
+func validateSendEmailRequest(req *SendEmailRequest) error {
+	if len(req.To) == 0 {
+		return errors.New("To cannot be empty")
+	}
+
+	for _, recipient := range req.To {
+		if recipient.Email == "" {
+			return errors.New("To's email cannot be empty")
+		}
+		if recipient.Name == "" {
+			return errors.New("To's name cannot be empty")
+		}
+	}
+
+	if req.From == nil {
+		return errors.New("From cannot be nil")
+	}
+
+	if req.From.Email == "" {
+		return errors.New("From's email cannot be empty")
+	}
+
+	if req.From.Name == "" {
+		return errors.New("From's name cannot be empty")
+	}
+
+	if req.Subject == "" {
+		return errors.New("Subject cannot be empty")
+	}
+
+	if req.Attachments == nil {
+		req.Attachments = []*Attachment{}
+	}
+
+	return nil
+}
+
+func validateSendSMSRequest(req *SendSMSRequest) error {
+	if req.To == "" {
+		return errors.New("To cannot be empty")
+	}
+
+	if req.From == "" {
+		return errors.New("From cannot be empty")
+	}
+
+	if req.Body == "" {
+		return errors.New("Body cannot be empty")
+	}
+
+	return nil
+}
