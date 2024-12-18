@@ -96,7 +96,11 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 		Variables: map[string]string{},
 	}
 	if req.BodyHTML != "" {
-		conversationReq.Variables["htmlContentStr"] = req.BodyHTML
+		// Conversation custom variables are the only way we can
+		// send HTML content in an email. These values have a max
+		// length of 1024 characters, so we need to chunk the HTML
+		// content into multiple variables.
+		conversationReq.Variables = chunkString(req.BodyHTML)
 	}
 
 	conversationResp, err := k.createConversation(ctx, customerID, conversationReq)
@@ -125,7 +129,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 		contentType := http.DetectContentType(att.Content)
 
 		// Create Attachment Request, this will return a pre-signed URL
-		attachmentResp, err := k.createDraftAttachment(ctx, &CreateAttachmentRequest{
+		attachmentResp, err := k.createDraftAttachment(ctx, draftResp.Data.Id, &CreateAttachmentRequest{
 			Name:          att.Name,
 			ContentType:   att.ContentType,
 			ContentLength: int64(len(att.Content)),
@@ -276,7 +280,7 @@ func (k *Kustomer) updateDraftMessage(ctx context.Context, draftID string, req *
 	return resp, nil
 }
 
-func (k *Kustomer) createDraftAttachment(ctx context.Context, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error) {
+func (k *Kustomer) createDraftAttachment(ctx context.Context, draftID string, req *CreateAttachmentRequest) (*CreateAttachmentResponse, error) {
 	if err := validateAttachmentRequest(req); err != nil {
 		return nil, errors.Wrap(err, "failed to validate CreateAttachmentRequest")
 	}
@@ -288,7 +292,7 @@ func (k *Kustomer) createDraftAttachment(ctx context.Context, req *CreateAttachm
 
 	headers := k.getHeaders()
 	resp := &CreateAttachmentResponse{}
-	endpoint := fmt.Sprintf("%s/attachments", BaseAPIURL)
+	endpoint := fmt.Sprintf("%s/drafts/%s/attachments", BaseAPIURL, draftID)
 
 	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to create attachment for file '%s'", req.Name)
@@ -407,4 +411,23 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 	resp.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
 
 	return buf.Bytes(), nil
+}
+
+func chunkString(input string) map[string]string {
+	const chunkSize = 1024
+	result := make(map[string]string)
+	var counter int
+
+	for start := 0; start < len(input); start += chunkSize {
+		end := start + chunkSize
+		if end > len(input) {
+			end = len(input)
+		}
+
+		key := fmt.Sprintf("htmlContent%dStr", counter)
+		result[key] = input[start:end]
+		counter++
+	}
+
+	return result
 }
