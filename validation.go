@@ -139,6 +139,11 @@ func validateUploadAttachmentRequest(req *UploadAttachmentRequest) error {
 }
 
 func validateSendEmailRequest(req *SendEmailRequest) error {
+	// We set 10 as the maximum number of custom html strings for a conversation
+	// This limit can be increased, you'll need to add more custom strings to
+	// the "Master Template" template inside of Kustomer
+	const MaxHTMLBodySize = 10240
+
 	if len(req.To) == 0 {
 		return errors.New("To cannot be empty")
 	}
@@ -170,6 +175,10 @@ func validateSendEmailRequest(req *SendEmailRequest) error {
 
 	if req.Attachments == nil {
 		req.Attachments = []*Attachment{}
+	}
+
+	if len(req.BodyHTML) > MaxHTMLBodySize {
+		return errors.New("BodyHTML cannot be longer than 10240 characters")
 	}
 
 	return nil

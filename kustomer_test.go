@@ -165,7 +165,7 @@ var _ = Describe("Kustomer SDK", func() {
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
-			resp, err := k.createDraftAttachment(context.Background(), req)
+			resp, err := k.createDraftAttachment(context.Background(), "1234", req)
 			Expect(err).To(BeNil())
 			Expect(resp).ToNot(BeNil())
 
