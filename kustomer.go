@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -24,6 +25,10 @@ type IKustomer interface {
 
 	// SendSMS sends an SMS to a Kustomer
 	SendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error
+
+	GetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey) (bool, error)
+
+	SetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey, value bool) error
 }
 
 type Options struct {
@@ -191,6 +196,68 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to create draft message for conversation '%s'", convoResp.Data.Id)
+	}
+
+	return nil
+}
+
+func (k *Kustomer) GetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey) (bool, error) {
+	if customerID == "" {
+		return false, errors.New("customerID cannot be empty")
+	}
+	if attribute == "" {
+		return false, errors.New("attribute cannot be empty")
+	}
+	if !strings.HasSuffix(string(attribute), "Bool") {
+		return false, errors.New("attribute must end with 'Bool'")
+	}
+
+	headers := k.getHeaders()
+	resp := &GetCustomerAttributesResponse{}
+	endpoint := fmt.Sprintf("%s/customers/%s", BaseAPIURL, customerID)
+
+	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
+		return false, errors.Wrapf(err, "unable to get customer with ID '%s'", customerID)
+	}
+
+	// Check if the attribute exists
+	if _, ok := resp.Data.Attributes.Custom[attribute]; !ok {
+		return false, nil
+	}
+
+	// Check if the attribute is a boolean
+	if _, ok := resp.Data.Attributes.Custom[attribute].(bool); !ok {
+		return false, errors.New("attribute is not a boolean")
+	}
+
+	return resp.Data.Attributes.Custom[attribute].(bool), nil
+}
+
+func (k *Kustomer) SetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey, value bool) error {
+	if customerID == "" {
+		return errors.New("customerID cannot be empty")
+	}
+	if attribute == "" {
+		return errors.New("attribute cannot be empty")
+	}
+	if !strings.HasSuffix(string(attribute), "Bool") {
+		return errors.New("attribute must end with 'Bool'")
+	}
+
+	req := &SetCustomerAttributesRequest{}
+	req.Custom = make(map[CustomAttrKey]interface{})
+	req.Custom[attribute] = value
+
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal SetCustomerAttributesRequest")
+	}
+
+	headers := k.getHeaders()
+	endpoint := fmt.Sprintf("%s/customers/%s", BaseAPIURL, customerID)
+
+	if _, err := k.call(ctx, endpoint, http.MethodPatch, data, nil, headers...); err != nil {
+		return errors.Wrapf(err, "unable to set customer attribute '%s' for customer '%s'", attribute, customerID)
 	}
 
 	return nil
