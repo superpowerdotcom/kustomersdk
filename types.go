@@ -31,6 +31,15 @@ const (
 	MessageAppGmail   MessageApp = "gmail"
 )
 
+type CustomAttrKey string
+
+const (
+	CustomAttrIsSubscribed                CustomAttrKey = "subscribedBool"
+	CustomAttrIsIntakeCompleted           CustomAttrKey = "initialIntakeCompleteBool"
+	CustomAttrIntakeReminderScheduledBool CustomAttrKey = "intakeReminderScheduledBool"
+	CustomAttrInitialIntakeCompleteBool   CustomAttrKey = "initialIntakeCompleteBool"
+)
+
 type SendEmailRequest struct {
 	To          []*EmailContact
 	From        *EmailContact
@@ -309,4 +318,20 @@ type Relationships struct {
 		Links Links            `json:"links"`
 		Data  RelationshipData `json:"data"`
 	} `json:"modifiedBy,omitempty"`
+}
+
+type GetCustomerAttributesResponse struct {
+	Data struct {
+		Attributes struct {
+			Custom map[CustomAttrKey]interface{} `json:"custom"`
+		} `json:"attributes"`
+	} `json:"data"`
+}
+
+type SetCustomerAttributesRequest struct {
+	Custom map[CustomAttrKey]interface{} `json:"custom"`
+}
+
+type SetCustomerAttributesResponse struct {
+	// TODO: what does this return?
 }
