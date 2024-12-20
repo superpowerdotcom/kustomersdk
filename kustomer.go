@@ -26,9 +26,9 @@ type IKustomer interface {
 	// SendSMS sends an SMS to a Kustomer
 	SendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error
 
-	GetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey) (bool, error)
+	GetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey) (bool, error)
 
-	SetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey, value bool) error
+	SetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey, value bool) error
 }
 
 type Options struct {
@@ -201,7 +201,7 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 	return nil
 }
 
-func (k *Kustomer) GetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey) (bool, error) {
+func (k *Kustomer) GetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey) (bool, error) {
 	if customerID == "" {
 		return false, errors.New("customerID cannot be empty")
 	}
@@ -233,7 +233,7 @@ func (k *Kustomer) GetCustomerAttributeBool(ctx context.Context, customerID, att
 	return resp.Data.Attributes.Custom[attribute].(bool), nil
 }
 
-func (k *Kustomer) SetCustomerAttributeBool(ctx context.Context, customerID, attribute CustomAttrKey, value bool) error {
+func (k *Kustomer) SetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey, value bool) error {
 	if customerID == "" {
 		return errors.New("customerID cannot be empty")
 	}
