@@ -34,8 +34,10 @@ const (
 type CustomAttrKey string
 
 const (
-	CustomAttrIsSubscribed      CustomAttrKey = "subscribedBool"
-	CustomAttrIsIntakeCompleted CustomAttrKey = "initialIntakeCompleteBool"
+	CustomAttrIsSubscribed                CustomAttrKey = "subscribedBool"
+	CustomAttrIsIntakeCompleted           CustomAttrKey = "initialIntakeCompleteBool"
+	CustomAttrIntakeReminderScheduledBool CustomAttrKey = "intakeReminderScheduledBool"
+	CustomAttrInitialIntakeCompleteBool   CustomAttrKey = "initialIntakeCompleteBool"
 )
 
 type SendEmailRequest struct {
