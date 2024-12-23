@@ -215,9 +215,10 @@ type GetCustomerByExternalIDResponse struct {
 				Polarity   int     `json:"polarity"`
 				Confidence float64 `json:"confidence"`
 			} `json:"sentiment"`
-			ProgressiveStatus string `json:"progressiveStatus"`
-			Verified          bool   `json:"verified"`
-			Rev               int    `json:"rev"`
+			ProgressiveStatus string                 `json:"progressiveStatus"`
+			Verified          bool                   `json:"verified"`
+			Rev               int                    `json:"rev"`
+			Custom            map[string]interface{} `json:"custom"`
 		} `json:"attributes"`
 		Relationships Relationships `json:"relationships"`
 		Links         Links         `json:"links"`
