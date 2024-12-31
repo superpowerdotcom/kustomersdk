@@ -51,6 +51,10 @@ func NewICSFile(p *ICSParams, attendees []*ICSAttendee) (*ICSFile, error) {
 		return nil, errors.Wrap(err, "failed to validate ICS params")
 	}
 
+	if attendees == nil {
+		return nil, errors.New("attendees is required")
+	}
+
 	p.Attendees = append(attendees, DefaultOrganizer)
 
 	return &ICSFile{
@@ -134,7 +138,9 @@ func (p *ICSParams) validate() error {
 		if p.Description == "" {
 			return errors.New("description is required")
 		}
-	} else if p.Status == ICSStatusCancelled {
+	}
+
+	if p.Status == ICSStatusCancelled {
 		p.Description = ""
 	}
 
