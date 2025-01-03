@@ -188,6 +188,7 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 
 	chunks := chunkSMSMessage(req.Body)
 	for _, chunk := range chunks {
+		time.Sleep(time.Second * 5) // Ensure messages don't go out of order
 		if err := k.sendSMS(ctx, customerID, req, chunk); err != nil {
 			return errors.Wrap(err, "failed to send MMS message")
 		}
