@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -171,6 +172,24 @@ var _ = Describe("Kustomer SDK", func() {
 
 			// This is the URL where uploads will be POSTed to
 			Expect(resp.Data.Links.Related).To(Equal("http://www.cool.com"))
+		})
+	})
+
+	Context("chunkSMSMessage", func() {
+		It("returns a single element when the message is less than 1600 chars", func() {
+			msg := "This is a short message"
+			chunks := chunkSMSMessage(msg)
+			Expect(len(chunks)).To(Equal(1))
+			Expect(chunks[0]).To(Equal(msg))
+		})
+
+		It("returns multiple elements when the message is greater than 1600 chars", func() {
+			msg := strings.Repeat("a", 1600) + strings.Repeat("b", 1600) + strings.Repeat("c", 1600)
+			chunks := chunkSMSMessage(msg)
+			Expect(len(chunks)).To(Equal(3))
+			Expect(chunks[0]).To(Equal(strings.Repeat("a", 1600)))
+			Expect(chunks[1]).To(Equal(strings.Repeat("b", 1600)))
+			Expect(chunks[2]).To(Equal(strings.Repeat("c", 1600)))
 		})
 	})
 })

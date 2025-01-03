@@ -14,7 +14,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-const BaseAPIURL = "https://api.kustomerapp.com/v1"
+const (
+	// Kustomer.com API URL
+	BaseAPIURL = "https://api.kustomerapp.com/v1"
+
+	// htmlBodyChunkSize is the max length of a single HTML body chunk. These values are passed to kustomer
+	// as custom params in the conversation, and have a max length of 1024 characters each.
+	// If the message will exceed 10 of these, aka 10,240 characters, we will need to update the
+	// HTML template in Kustomer to support more chunks.
+	htmlBodyChunkSize = 1024
+
+	// smsChunkSize is the max length of a single MMS message.
+	// If the copy exceeds this length, we will need to split the message into multiple MMS messages.
+	smsChunkSize = 1600
+)
 
 type IKustomer interface {
 	// GetCustomerByExternalID retrieves a customer by their external ID, which in our case is the database ID
@@ -105,7 +118,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 		// send HTML content in an email. These values have a max
 		// length of 1024 characters, so we need to chunk the HTML
 		// content into multiple variables.
-		conversationReq.Variables = chunkString(req.BodyHTML)
+		conversationReq.Variables = chunkHTMLBody(req.BodyHTML)
 	}
 
 	conversationResp, err := k.createConversation(ctx, customerID, conversationReq)
@@ -173,6 +186,18 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 		return errors.Wrap(err, "failed to validate SendSMSRequest")
 	}
 
+	chunks := chunkSMSMessage(req.Body)
+	for _, chunk := range chunks {
+		if err := k.sendSMS(ctx, customerID, req, chunk); err != nil {
+			return errors.Wrap(err, "failed to send MMS message")
+		}
+		time.Sleep(time.Second * 5) // Ensure messages don't go out of order
+	}
+
+	return nil
+}
+
+func (k *Kustomer) sendSMS(ctx context.Context, customerID string, req *SendSMSRequest, message string) error {
 	// Create a conversation under the customer, and then we'll take
 	// the resulting conversation ID and make a draft
 	convoResp, err := k.createConversation(ctx, customerID, &CreateConversationRequest{
@@ -191,7 +216,7 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 		Conversation: convoResp.Data.Id,
 		To:           req.To,
 		From:         req.From,
-		Body:         req.Body,
+		Body:         message,
 		SendAt:       time.Now().UTC().Add(time.Minute).Format(time.RFC3339),
 	})
 	if err != nil {
@@ -480,13 +505,14 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func chunkString(input string) map[string]string {
-	const chunkSize = 1024
+// chunkHTMLBody is used to split an HTML body into chunks of 1024 characters that
+// are then passed to Kustomer as custom variables in the conversation.
+func chunkHTMLBody(input string) map[string]string {
 	result := make(map[string]string)
 	var counter int
 
-	for start := 0; start < len(input); start += chunkSize {
-		end := start + chunkSize
+	for start := 0; start < len(input); start += htmlBodyChunkSize {
+		end := start + htmlBodyChunkSize
 		if end > len(input) {
 			end = len(input)
 		}
@@ -497,4 +523,20 @@ func chunkString(input string) map[string]string {
 	}
 
 	return result
+}
+
+// chunkSMSMessage is used to split an MMS message into chunks of 1600 characters
+// as that is the max length for a single MMS message
+func chunkSMSMessage(message string) []string {
+	chunks := make([]string, 0)
+
+	for start := 0; start < len(message); start += smsChunkSize {
+		end := start + smsChunkSize
+		if end > len(message) {
+			end = len(message)
+		}
+		chunks = append(chunks, message[start:end])
+	}
+
+	return chunks
 }
