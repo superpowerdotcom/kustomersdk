@@ -66,6 +66,8 @@ func NewICSFile(p *ICSParams, attendees []*ICSAttendee) (*ICSFile, error) {
 func (i *ICSFile) ToFile() []byte {
 	cal := ics.NewCalendar()
 	cal.SetMethod(ics.MethodRequest)
+	cal.SetCalscale("GREGORIAN")
+	cal.SetXPublishedTTL("PT1H")
 
 	event := cal.AddEvent(i.Params.ID)
 	event.SetCreatedTime(time.Now().UTC())
@@ -77,6 +79,7 @@ func (i *ICSFile) ToFile() []byte {
 	event.SetLocation(i.Params.Location)
 	event.SetDescription(i.Params.Description)
 	event.SetOrganizer(DefaultOrganizer.Email, ics.WithCN(DefaultOrganizer.FirstName+" "+DefaultOrganizer.LastName))
+	event.SetStatus("CONFIRMED")
 
 	if i.Params.Status == ICSStatusCancelled {
 		event.SetSequence(1)
