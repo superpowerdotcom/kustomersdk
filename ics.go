@@ -147,9 +147,5 @@ func (p *ICSParams) validate() error {
 		p.Description = ""
 	}
 
-	if p.Location == "" {
-		return errors.New("location is required")
-	}
-
 	return nil
 }
