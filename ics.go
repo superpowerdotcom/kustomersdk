@@ -79,12 +79,13 @@ func (i *ICSFile) ToFile() []byte {
 	event.SetLocation(i.Params.Location)
 	event.SetDescription(i.Params.Description)
 	event.SetOrganizer(DefaultOrganizer.Email, ics.WithCN(DefaultOrganizer.FirstName+" "+DefaultOrganizer.LastName))
-	event.SetStatus("CONFIRMED")
 
 	if i.Params.Status == ICSStatusCancelled {
 		event.SetSequence(1)
+		event.SetStatus("CANCELLED")
 	} else {
 		event.SetSequence(0)
+		event.SetStatus("CONFIRMED")
 	}
 
 	for _, att := range i.Params.Attendees {
