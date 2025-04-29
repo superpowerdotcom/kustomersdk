@@ -65,7 +65,14 @@ func NewICSFile(p *ICSParams, attendees []*ICSAttendee) (*ICSFile, error) {
 // ToFile returns the ICS file as a byte slice
 func (i *ICSFile) ToFile() []byte {
 	cal := ics.NewCalendar()
-	cal.SetMethod(ics.MethodRequest)
+
+
+	if i.Params.Status == ICSStatusCancelled {
+		cal.SetMethod(ics.MethodCancel)
+	} else {
+		cal.SetMethod(ics.MethodRequest)
+	}
+
 	cal.SetCalscale("GREGORIAN")
 	cal.SetXPublishedTTL("PT1H")
 
