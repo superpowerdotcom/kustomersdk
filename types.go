@@ -48,20 +48,25 @@ type SendEmailRequest struct {
 	BodyText    string
 	BodyHTML    string
 	Attachments []*Attachment
+	AutocloseComms bool
+	CategoryTree   string
 }
 
 type SendSMSRequest struct {
 	To   string
 	From string
 	Body string
+	Subject string // Optional. If empty, will default to the first 250 characters of the body plus '...'
+	AutocloseComms bool
+	CategoryTree   string
 }
 
 type CreateConversationRequest struct {
 	Direction ConversationDirection `json:"direction,omitempty"`
 	Status    ConversationStatus    `json:"status,omitempty"`
-
-	// Used for setting custom variables, ie. html content
-	Variables map[string]string `json:"custom,omitempty"`
+	Name      string                `json:"name,omitempty"`
+	// Used for setting custom variables, ie. html content, categoryTree, etc.
+	Variables map[string]string     `json:"custom,omitempty"`
 }
 
 type CreateConversationResponse struct {
@@ -336,3 +341,4 @@ type SetCustomerAttributesRequest struct {
 type SetCustomerAttributesResponse struct {
 	// TODO: what does this return?
 }
+

@@ -102,25 +102,35 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 	if err := validateSendEmailRequest(req); err != nil {
 		return errors.Wrap(err, "failed to validate SendEmailRequest")
 	}
-
 	if req.Attachments == nil {
 		req.Attachments = make([]*Attachment, 0)
 	}
-
+	
 	// Create Conversation
 	conversationReq := &CreateConversationRequest{
 		Direction: ConversationDirectionOut,
 		Status:    ConversationStatusOpen,
+		Name:      req.Subject,
 		Variables: map[string]string{},
 	}
-	if req.BodyHTML != "" {
-		// Conversation custom variables are the only way we can
-		// send HTML content in an email. These values have a max
-		// length of 1024 characters, so we need to chunk the HTML
-		// content into multiple variables.
-		conversationReq.Variables = chunkHTMLBody(req.BodyHTML)
+	
+	// Add categoryTree to the custom variables if it's specified
+	if req.CategoryTree != "" {
+		conversationReq.Variables["categoryTree"] = req.CategoryTree
 	}
 
+	// Conversation custom variables are the only way we can
+	// send HTML content in an email. These values have a max
+	// length of 1024 characters, so we need to chunk the HTML
+	// content into multiple variables.
+	if req.BodyHTML != "" {
+		// Merge the HTML body chunks into the variables map
+		htmlChunks := chunkHTMLBody(req.BodyHTML)
+		for k, v := range htmlChunks {
+			conversationReq.Variables[k] = v
+		}
+	}
+	
 	conversationResp, err := k.createConversation(ctx, customerID, conversationReq)
 	if err != nil {
 		return errors.Wrap(err, "unable to create conversation")
@@ -185,42 +195,61 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 	if err := validateSendSMSRequest(req); err != nil {
 		return errors.Wrap(err, "failed to validate SendSMSRequest")
 	}
-
-	chunks := chunkSMSMessage(req.Body)
-	for _, chunk := range chunks {
-		if err := k.sendSMS(ctx, customerID, req, chunk); err != nil {
-			return errors.Wrap(err, "failed to send MMS message")
-		}
-		time.Sleep(time.Second * 5) // Ensure messages don't go out of order
-	}
-
-	return nil
+	return k.sendSMS(ctx, customerID, req)
 }
 
-func (k *Kustomer) sendSMS(ctx context.Context, customerID string, req *SendSMSRequest, message string) error {
-	// Create a conversation under the customer, and then we'll take
-	// the resulting conversation ID and make a draft
-	convoResp, err := k.createConversation(ctx, customerID, &CreateConversationRequest{
+func (k *Kustomer) sendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error {
+	// If subject is empty, set to first 250 chars of body + "..."
+	if req.Subject == "" {
+		if len(req.Body) > 250 { // Size limit is 256 characters
+			req.Subject = req.Body[:250] + "..."
+		} else {
+			req.Subject = req.Body
+		}
+	}
+
+	conversationStatus := ConversationStatusOpen
+	if req.AutocloseComms {
+		conversationStatus = ConversationStatusDone
+	}
+
+	// Create a conversation under the customer
+	convoReq := &CreateConversationRequest{
 		Direction: ConversationDirectionOut,
-		Status:    ConversationStatusOpen,
-	})
+		Status:    conversationStatus,
+		Name:      req.Subject,
+		Variables: map[string]string{},
+	}
+	
+	// Add categoryTree to the custom variables if it's specified
+	if req.CategoryTree != "" {
+		convoReq.Variables["categoryTree"] = req.CategoryTree
+	}
+	
+	
+	convoResp, err := k.createConversation(ctx, customerID, convoReq)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
 	}
 
-	// Create Draft Message with a timestamp 1 minute into the future.
-	// Kustomer requires it to be sent this way for some silly reason.
-	_, err = k.createDraftSMSMessage(ctx, customerID, &CreateDraftSMSMessageRequest{
-		App:          MessageAppTwilio,
-		Channel:      MessageChannelSMS,
-		Conversation: convoResp.Data.Id,
-		To:           req.To,
-		From:         req.From,
-		Body:         message,
-		SendAt:       time.Now().UTC().Add(time.Minute).Format(time.RFC3339),
-	})
-	if err != nil {
-		return errors.Wrapf(err, "failed to create draft message for conversation '%s'", convoResp.Data.Id)
+	// Chunk the message and send each chunk as a draft in the same conversation
+	chunks := chunkSMSMessage(req.Body)
+	for _, chunk := range chunks {
+		// Create Draft Message with a timestamp 1 minute into the future.
+		// Kustomer requires it to be sent this way for some silly reason.
+		_, err := k.createDraftSMSMessage(ctx, customerID, &CreateDraftSMSMessageRequest{
+			App:          MessageAppTwilio,
+			Channel:      MessageChannelSMS,
+			Conversation: convoResp.Data.Id,
+			To:           req.To,
+			From:         req.From,
+			Body:         chunk,
+			SendAt:       time.Now().UTC().Add(time.Minute).Format(time.RFC3339), // Kustomer requires it to be sent this way for some silly reason
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to create draft message for conversation '%s' and recipient '%s'", convoResp.Data.Id, req.To)
+		}
+		time.Sleep(time.Second * 5) // Ensure messages don't go out of order
 	}
 
 	return nil
