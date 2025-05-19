@@ -48,7 +48,7 @@ type SendEmailRequest struct {
 	BodyText    string
 	BodyHTML    string
 	Attachments []*Attachment
-	AutocloseComms bool
+	AutoCloseConversation bool
 	CategoryTree   string
 }
 
@@ -57,7 +57,7 @@ type SendSMSRequest struct {
 	From string
 	Body string
 	Subject string // Optional. If empty, will default to the first 250 characters of the body plus '...'
-	AutocloseComms bool
+	AutoCloseConversation bool
 	CategoryTree   string
 }
 

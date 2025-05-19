@@ -105,11 +105,16 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 	if req.Attachments == nil {
 		req.Attachments = make([]*Attachment, 0)
 	}
+
+	conversationStatus := ConversationStatusOpen
+	if req.AutoCloseConversation {
+		conversationStatus = ConversationStatusDone
+	}
 	
 	// Create Conversation
 	conversationReq := &CreateConversationRequest{
 		Direction: ConversationDirectionOut,
-		Status:    ConversationStatusOpen,
+		Status:    conversationStatus,
 		Name:      req.Subject,
 		Variables: map[string]string{},
 	}
@@ -195,10 +200,7 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 	if err := validateSendSMSRequest(req); err != nil {
 		return errors.Wrap(err, "failed to validate SendSMSRequest")
 	}
-	return k.sendSMS(ctx, customerID, req)
-}
 
-func (k *Kustomer) sendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error {
 	// If subject is empty, set to first 250 chars of body + "..."
 	if req.Subject == "" {
 		if len(req.Body) > 250 { // Size limit is 256 characters
@@ -209,7 +211,7 @@ func (k *Kustomer) sendSMS(ctx context.Context, customerID string, req *SendSMSR
 	}
 
 	conversationStatus := ConversationStatusOpen
-	if req.AutocloseComms {
+	if req.AutoCloseConversation {
 		conversationStatus = ConversationStatusDone
 	}
 
