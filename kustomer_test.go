@@ -104,6 +104,7 @@ var _ = Describe("Kustomer SDK", func() {
 			req := &CreateConversationRequest{
 				Direction: ConversationDirectionOut,
 				Status:    ConversationStatusOpen,
+				Name:      "Test Conversation",
 			}
 
 			k := KustomerWithMockResponse(http.StatusCreated, apiResp)
