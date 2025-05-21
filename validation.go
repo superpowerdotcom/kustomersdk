@@ -199,3 +199,36 @@ func validateSendSMSRequest(req *SendSMSRequest) error {
 
 	return nil
 }
+
+func validateSendNoteRequest(req *SendNoteRequest) error {
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+	if req.Body == "" {
+		return errors.New("Body cannot be empty")
+	}
+	return nil
+}
+
+func validateCreateDraftNoteMessageRequest(req *CreateDraftNoteMessageRequest) error {
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+	if req.Channel == "" {
+		return errors.New("Channel cannot be empty")
+	}
+
+	channels := []MessageChannel{MessageChannelNote}
+	if !slices.Contains(channels, req.Channel) {
+		return errors.New("Channel must be 'note'")
+	}
+
+	if req.Conversation == "" {
+		return errors.New("Conversation cannot be empty")
+	}
+	if req.Body == "" {
+		return errors.New("Body cannot be empty")
+	}
+
+	return nil
+}

@@ -33,6 +33,9 @@ func main() {
 	
 	// Test SendEmail
 	testSendEmail(client, customerID, categoryTree)
+	
+	// Test SendNote
+	testSendNote(client, customerID, categoryTree)
 }
 
 func testSendSMS(client *kustomersdk.Kustomer, customerID, categoryTree string) {
@@ -122,4 +125,24 @@ Looking forward to helping you reach your health goals!`
 	}
 	
 	log.Println("Email sent successfully")
+}
+
+func testSendNote(client *kustomersdk.Kustomer, customerID, categoryTree string) {
+	log.Println("Testing SendNote...")
+	
+	noteBody := `Internal note: Customer mentioned they're preparing for a marathon next month and might need some adjustments to their nutrition plan. 
+Follow up about creating a custom meal plan for endurance training. They also expressed interest in recovery supplements.`
+
+	err := client.SendNote(context.Background(), customerID, &kustomersdk.SendNoteRequest{
+		Body:                 noteBody,
+		Subject:              "Marathon Preparation",
+		AutoCloseConversation: false,
+		CategoryTree:         categoryTree,
+	})
+	
+	if err != nil {
+		log.Fatalf("Failed to send note: %v", err)
+	}
+	
+	log.Println("Note sent successfully")
 } 

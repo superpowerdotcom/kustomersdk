@@ -21,6 +21,7 @@ type MessageChannel string
 const (
 	MessageChannelSMS   MessageChannel = "sms"
 	MessageChannelEmail MessageChannel = "email"
+	MessageChannelNote  MessageChannel = "note"
 )
 
 type MessageApp string
@@ -340,5 +341,20 @@ type SetCustomerAttributesRequest struct {
 
 type SetCustomerAttributesResponse struct {
 	// TODO: what does this return?
+}
+
+type SendNoteRequest struct {
+	Body string
+	Subject string
+	AutoCloseConversation bool
+	CategoryTree string
+
+}
+
+type CreateDraftNoteMessageRequest struct {
+	Channel      MessageChannel `json:"channel"` // REQUIRED
+	Conversation string         `json:"conversation,omitempty"`
+	Body         string         `json:"body,omitempty"`
+	SendAt       string         `json:"sendAt,omitempty"`
 }
 
