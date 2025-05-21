@@ -39,6 +39,9 @@ type IKustomer interface {
 	// SendSMS sends an SMS to a Kustomer
 	SendSMS(ctx context.Context, customerID string, req *SendSMSRequest) error
 
+	// SendNote adds a note to a customer's conversation
+	SendNote(ctx context.Context, customerID string, req *SendNoteRequest) error
+
 	GetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey) (bool, error)
 
 	SetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey, value bool) error
@@ -257,6 +260,53 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 	return nil
 }
 
+func (k *Kustomer) SendNote(ctx context.Context, customerID string, req *SendNoteRequest) error {
+	if err := validateSendNoteRequest(req); err != nil {
+		return errors.Wrap(err, "failed to validate SendNoteRequest")
+	}
+
+	conversationStatus := ConversationStatusOpen
+	if req.AutoCloseConversation {
+		conversationStatus = ConversationStatusDone
+	}
+
+	note := "Note"
+	if req.Subject != "" {
+		note = req.Subject
+	}
+
+	// Create a conversation under the customer
+	convoReq := &CreateConversationRequest{
+		Direction: ConversationDirectionOut,
+		Status:    conversationStatus,
+		Name:      note,
+		Variables: map[string]string{},
+	}
+	
+	// Add categoryTree to the custom variables if it's specified
+	if req.CategoryTree != "" {
+		convoReq.Variables["categoryTree"] = req.CategoryTree
+	}
+	
+	convoResp, err := k.createConversation(ctx, customerID, convoReq)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
+	}
+
+	// Create Draft Note Message
+	_, err = k.createDraftNoteMessage(ctx, customerID, &CreateDraftNoteMessageRequest{
+		Channel:      MessageChannelNote,
+		Conversation: convoResp.Data.Id,
+		Body:         req.Body,
+		SendAt:       time.Now().UTC().Add(time.Minute).Format(time.RFC3339),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to create note message for conversation '%s'", convoResp.Data.Id)
+	}
+
+	return nil
+}
+
 func (k *Kustomer) GetCustomerAttributeBool(ctx context.Context, customerID string, attribute CustomAttrKey) (bool, error) {
 	if customerID == "" {
 		return false, errors.New("customerID cannot be empty")
@@ -441,6 +491,27 @@ func (k *Kustomer) uploadAttachment(ctx context.Context, req *UploadAttachmentRe
 	return nil
 }
 
+func (k *Kustomer) createDraftNoteMessage(ctx context.Context, customerID string, req *CreateDraftNoteMessageRequest) (*CreateDraftMessageResponse, error) {
+	if err := validateCreateDraftNoteMessageRequest(req); err != nil {
+		return nil, errors.Wrap(err, "failed to validate CreateDraftNoteMessageRequest")
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal CreateDraftNoteMessageRequest")
+	}
+
+	headers := k.getHeaders()
+	resp := &CreateDraftMessageResponse{}
+	endpoint := fmt.Sprintf("%s/customers/%s/drafts", BaseAPIURL, customerID)
+
+	if _, err := k.call(ctx, endpoint, http.MethodPost, body, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to create note message for conversation '%s'", req.Conversation)
+	}
+
+	return resp, nil
+}
+
 // getHeaders returns all necessary headers for performing an HTTP call to Kustomer
 func (k *Kustomer) getHeaders() []http.Header {
 	return []http.Header{
@@ -571,3 +642,5 @@ func chunkSMSMessage(message string) []string {
 
 	return chunks
 }
+
+
