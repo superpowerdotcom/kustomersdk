@@ -36,6 +36,12 @@ type IKustomer interface {
 	// ListConversations retrieves conversations with pagination and optional date filtering
 	ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, error)
 
+	// GetConversationMessages retrieves messages for a conversation with pagination
+	GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, error)
+
+	// GetUserByID retrieves a user by their ID for internal practitioner data
+	GetUserByID(ctx context.Context, userID string) (*UserResponse, error)
+
 	// SendEmail sends an email to a Kustomer
 	SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error
 
@@ -130,6 +136,46 @@ func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int
 			}
 		}
 		resp.Data = filteredData
+	}
+
+	return resp, nil
+}
+
+func (k *Kustomer) GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, error) {
+	if conversationID == "" {
+		return nil, errors.New("conversationID cannot be empty")
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 1000 {
+		pageSize = 1000
+	}
+
+	headers := k.getHeaders()
+	resp := &MessageListResponse{}
+
+	endpoint := fmt.Sprintf("%s/conversations/%s/messages?page=%d&pageSize=%d", BaseAPIURL, conversationID, page, pageSize)
+
+	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to get messages for conversation '%s' (page=%d, pageSize=%d)", conversationID, page, pageSize)
+	}
+
+	return resp, nil
+}
+
+func (k *Kustomer) GetUserByID(ctx context.Context, userID string) (*UserResponse, error) {
+	if userID == "" {
+		return nil, errors.New("userID cannot be empty")
+	}
+
+	headers := k.getHeaders()
+	resp := &UserResponse{}
+
+	endpoint := fmt.Sprintf("%s/users/%s", BaseAPIURL, userID)
+
+	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to get user with ID '%s'", userID)
 	}
 
 	return resp, nil

@@ -479,3 +479,110 @@ type ResponseSummary struct {
 	ResponseTime   int       `json:"responseTime,omitempty"`
 }
 
+// MessageListResponse represents the response from the messages list endpoint
+type MessageListResponse struct {
+	Meta  PaginationMeta `json:"meta"`
+	Links PaginationLinks `json:"links"`
+	Data  []Message `json:"data"`
+}
+
+// Message represents a Kustomer message
+type Message struct {
+	Type          string             `json:"type"`
+	ID            string             `json:"id"`
+	Attributes    MessageAttributes  `json:"attributes"`
+	Relationships Relationships      `json:"relationships"`
+	Links         MessageLinks       `json:"links"`
+}
+
+// MessageAttributes contains all message attributes
+type MessageAttributes struct {
+	ExternalID       string                 `json:"externalId"`
+	Channel          string                 `json:"channel"`
+	App              string                 `json:"app"`
+	Size             int                    `json:"size"`
+	Direction        string                 `json:"direction"`
+	DirectionType    string                 `json:"directionType"`
+	Location         *MessageLocation       `json:"location,omitempty"`
+	Preview          string                 `json:"preview"`
+	Sentiment        *Sentiment             `json:"sentiment,omitempty"`
+	Meta             map[string]interface{} `json:"meta"`
+	Status           string                 `json:"status"`
+	AssignedTeams    []string               `json:"assignedTeams"`
+	AssignedUsers    []string               `json:"assignedUsers"`
+	Auto             bool                   `json:"auto"`
+	SentAt           *time.Time             `json:"sentAt,omitempty"`
+	CreatedAt        time.Time              `json:"createdAt"`
+	UpdatedAt        time.Time              `json:"updatedAt"`
+	ModifiedAt       *time.Time             `json:"modifiedAt,omitempty"`
+	Redacted         bool                   `json:"redacted"`
+	CreatedByTeams   []string               `json:"createdByTeams"`
+	Rev              int                    `json:"rev"`
+	Reactions        []interface{}          `json:"reactions"`
+	IntentDetections []interface{}          `json:"intentDetections"`
+	Error            *MessageError          `json:"error,omitempty"`
+}
+
+// MessageLocation represents location information for a message
+type MessageLocation struct {
+	CountryName string `json:"countryName"`
+	RegionName  string `json:"regionName"`
+	CityName    string `json:"cityName"`
+	ZipCode     string `json:"zipCode"`
+}
+
+// MessageError represents error information for failed messages
+type MessageError struct {
+	Status int    `json:"status"`
+	Code   string `json:"code"`
+	Title  string `json:"title"`
+	Detail string `json:"detail"`
+}
+
+// MessageLinks contains links for a message
+type MessageLinks struct {
+	Self    string `json:"self"`
+	Related string `json:"related"`
+}
+
+// UserResponse represents the response from the user endpoint
+type UserResponse struct {
+	Data User `json:"data"`
+}
+
+// User represents a Kustomer user (internal practitioner)
+type User struct {
+	Type          string           `json:"type"`
+	ID            string           `json:"id"`
+	Attributes    UserAttributes   `json:"attributes"`
+	Relationships Relationships    `json:"relationships"`
+	Links         Links            `json:"links"`
+}
+
+// UserAttributes contains all user attributes
+type UserAttributes struct {
+	DisplayName             string                 `json:"displayName"`
+	Name                    string                 `json:"name"`
+	UserType                string                 `json:"userType"`
+	Email                   string                 `json:"email"`
+	EmailSignature          *string                `json:"emailSignature,omitempty"`
+	EmailVerifiedAt         *time.Time             `json:"emailVerifiedAt,omitempty"`
+	MostRecentLoginAt       *time.Time             `json:"mostRecentLoginAt,omitempty"`
+	FirstEmailVerifiedAt    *time.Time             `json:"firstEmailVerifiedAt,omitempty"`
+	Password                UserPassword           `json:"password"`
+	Mobile                  *string                `json:"mobile,omitempty"`
+	RoleGroups              []string               `json:"roleGroups"`
+	Roles                   []string               `json:"roles"`
+	Custom                  map[string]interface{} `json:"custom"`
+	UpdatedAt               time.Time              `json:"updatedAt"`
+	ModifiedAt              time.Time              `json:"modifiedAt"`
+	CreatedAt               time.Time              `json:"createdAt"`
+}
+
+// UserPassword represents password settings for a user
+type UserPassword struct {
+	AllowNew  bool      `json:"allowNew"`
+	ForceNew  bool      `json:"forceNew"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
