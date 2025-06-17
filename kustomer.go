@@ -33,6 +33,9 @@ type IKustomer interface {
 	// GetCustomerByExternalID retrieves a customer by their external ID, which in our case is the database ID
 	GetCustomerByExternalID(ctx context.Context, databaseID string) (*GetCustomerByExternalIDResponse, error)
 
+	// ListConversations retrieves conversations with pagination and optional date filtering
+	ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, error)
+
 	// SendEmail sends an email to a Kustomer
 	SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error
 
@@ -96,6 +99,37 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 
 	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
 		return nil, errors.Wrapf(err, "unable to get customer by external ID '%s'", externalID)
+	}
+
+	return resp, nil
+}
+
+func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 1000 {
+		pageSize = 1000
+	}
+
+	headers := k.getHeaders()
+	resp := &ConversationListResponse{}
+
+	endpoint := fmt.Sprintf("%s/conversations?page=%d&pageSize=%d", BaseAPIURL, page, pageSize)
+
+	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
+		return nil, errors.Wrapf(err, "unable to list conversations (page=%d, pageSize=%d)", page, pageSize)
+	}
+
+	// Manual date filtering since Kustomer API doesn't support it natively
+	if startTime != nil {
+		filteredData := make([]Conversation, 0)
+		for _, conversation := range resp.Data {
+			if conversation.Attributes.UpdatedAt.After(*startTime) || conversation.Attributes.UpdatedAt.Equal(*startTime) {
+				filteredData = append(filteredData, conversation)
+			}
+		}
+		resp.Data = filteredData
 	}
 
 	return resp, nil

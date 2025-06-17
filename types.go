@@ -358,3 +358,124 @@ type CreateDraftNoteMessageRequest struct {
 	SendAt       string         `json:"sendAt,omitempty"`
 }
 
+// ConversationListResponse represents the response from the conversations list endpoint
+type ConversationListResponse struct {
+	Meta  PaginationMeta `json:"meta"`
+	Links PaginationLinks `json:"links"`
+	Data  []Conversation `json:"data"`
+}
+
+// PaginationMeta contains pagination metadata
+type PaginationMeta struct {
+	PageSize int `json:"pageSize"`
+	Page     int `json:"page"`
+}
+
+// PaginationLinks contains pagination navigation links
+type PaginationLinks struct {
+	Self  string  `json:"self"`
+	First string  `json:"first"`
+	Prev  *string `json:"prev"`
+	Next  *string `json:"next"`
+}
+
+// Conversation represents a Kustomer conversation
+type Conversation struct {
+	Type       string                `json:"type"`
+	ID         string                `json:"id"`
+	Attributes ConversationAttributes `json:"attributes"`
+	Relationships Relationships       `json:"relationships"`
+	Links      Links                 `json:"links"`
+}
+
+// ConversationAttributes contains all conversation attributes
+type ConversationAttributes struct {
+	Name                    string                 `json:"name"`
+	Preview                 string                 `json:"preview"`
+	Channels                []string               `json:"channels"`
+	Status                  string                 `json:"status"`
+	Open                    *StatusTimestamp       `json:"open,omitempty"`
+	MessageCount            int                    `json:"messageCount"`
+	LastReceivedAt          *time.Time             `json:"lastReceivedAt"`
+	NoteCount               int                    `json:"noteCount"`
+	Satisfaction            int                    `json:"satisfaction"`
+	SatisfactionLevel       SatisfactionLevel      `json:"satisfactionLevel"`
+	CreatedAt               time.Time              `json:"createdAt"`
+	UpdatedAt               time.Time              `json:"updatedAt"`
+	ModifiedAt              time.Time              `json:"modifiedAt"`
+	LastActivityAt          time.Time              `json:"lastActivityAt"`
+	Spam                    bool                   `json:"spam"`
+	Ended                   bool                   `json:"ended"`
+	EndedAt                 *time.Time             `json:"endedAt,omitempty"`
+	EndedReason             string                 `json:"endedReason,omitempty"`
+	EndedByType             string                 `json:"endedByType,omitempty"`
+	Tags                    []interface{}          `json:"tags"`
+	SuggestedTags           []interface{}          `json:"suggestedTags"`
+	Predictions             []interface{}          `json:"predictions"`
+	Sentiment               *Sentiment             `json:"sentiment,omitempty"`
+	SuggestedShortcuts      []interface{}          `json:"suggestedShortcuts"`
+	FirstMessageIn          *MessageSummary        `json:"firstMessageIn,omitempty"`
+	FirstMessageOut         *MessageSummary        `json:"firstMessageOut,omitempty"`
+	LastMessageIn           *MessageSummary        `json:"lastMessageIn,omitempty"`
+	LastMessageOut          *MessageSummary        `json:"lastMessageOut,omitempty"`
+	LastMessageAt           *time.Time             `json:"lastMessageAt"`
+	LastMessageUnrespondedTo *MessageSummary       `json:"lastMessageUnrespondedTo,omitempty"`
+	AssignedUsers           []string               `json:"assignedUsers"`
+	AssignedTeams           []string               `json:"assignedTeams"`
+	FirstResponse           *ResponseSummary       `json:"firstResponse,omitempty"`
+	LastResponse            *ResponseSummary       `json:"lastResponse,omitempty"`
+	Direction               string                 `json:"direction"`
+	LastMessageDirection    string                 `json:"lastMessageDirection"`
+	OutboundMessageCount    int                    `json:"outboundMessageCount"`
+	InboundMessageCount     int                    `json:"inboundMessageCount"`
+	Rev                     int                    `json:"rev"`
+	Priority                int                    `json:"priority"`
+	BillingStatus           string                 `json:"billingStatus"`
+	BillableReason          string                 `json:"billableReason"`
+	Custom                  map[string]interface{} `json:"custom,omitempty"`
+	Phase                   string                 `json:"phase"`
+}
+
+// StatusTimestamp represents a status with timestamp
+type StatusTimestamp struct {
+	StatusAt time.Time `json:"statusAt"`
+}
+
+// SatisfactionLevel represents satisfaction survey data
+type SatisfactionLevel struct {
+	SentByTeams []interface{} `json:"sentByTeams"`
+	Answers     []interface{} `json:"answers"`
+}
+
+// Sentiment represents sentiment analysis data
+type Sentiment struct {
+	Polarity   int     `json:"polarity"`
+	Confidence float64 `json:"confidence"`
+}
+
+// MessageSummary represents a summary of a message
+type MessageSummary struct {
+	ID               string                 `json:"id"`
+	SentAt           *time.Time             `json:"sentAt,omitempty"`
+	CreatedAt        time.Time              `json:"createdAt"`
+	DirectionType    string                 `json:"directionType,omitempty"`
+	Channel          string                 `json:"channel,omitempty"`
+	Meta             map[string]interface{} `json:"meta,omitempty"`
+	CreatedBy        string                 `json:"createdBy,omitempty"`
+	CreatedByTeams   []string               `json:"createdByTeams,omitempty"`
+}
+
+// ResponseSummary represents response time summary
+type ResponseSummary struct {
+	ID             string    `json:"id"`
+	Time           int       `json:"time"`
+	BusinessTime   int       `json:"businessTime"`
+	CreatedAt      time.Time `json:"createdAt"`
+	CreatedBy      string    `json:"createdBy,omitempty"`
+	CreatedByTeams []string  `json:"createdByTeams,omitempty"`
+	AssignedTeams  []string  `json:"assignedTeams,omitempty"`
+	AssignedUsers  []string  `json:"assignedUsers,omitempty"`
+	SentAt         *time.Time `json:"sentAt,omitempty"`
+	ResponseTime   int       `json:"responseTime,omitempty"`
+}
+
