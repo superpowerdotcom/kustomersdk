@@ -34,13 +34,13 @@ type IKustomer interface {
 	GetCustomerByExternalID(ctx context.Context, databaseID string) (*GetCustomerByExternalIDResponse, error)
 
 	// ListConversations retrieves conversations with pagination and optional date filtering
-	ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, error)
+	ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, http.Header, error)
 
 	// GetConversationMessages retrieves messages for a conversation with pagination
-	GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, error)
+	GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, http.Header, error)
 
 	// GetUserByID retrieves a user by their ID for internal practitioner data
-	GetUserByID(ctx context.Context, userID string) (*UserResponse, error)
+	GetUserByID(ctx context.Context, userID string) (*UserResponse, http.Header, error)
 
 	// SendEmail sends an email to a Kustomer
 	SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error
@@ -110,7 +110,7 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	return resp, nil
 }
 
-func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, error) {
+func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, http.Header, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -123,8 +123,9 @@ func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int
 
 	endpoint := fmt.Sprintf("%s/conversations?page=%d&pageSize=%d", BaseAPIURL, page, pageSize)
 
-	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
-		return nil, errors.Wrapf(err, "unable to list conversations (page=%d, pageSize=%d)", page, pageSize)
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to list conversations (page=%d, pageSize=%d)", page, pageSize)
 	}
 
 	// Manual date filtering since Kustomer API doesn't support it natively
@@ -138,12 +139,12 @@ func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int
 		resp.Data = filteredData
 	}
 
-	return resp, nil
+	return resp, httpResp.Header, nil
 }
 
-func (k *Kustomer) GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, error) {
+func (k *Kustomer) GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, http.Header, error) {
 	if conversationID == "" {
-		return nil, errors.New("conversationID cannot be empty")
+		return nil, nil, errors.New("conversationID cannot be empty")
 	}
 	if page < 1 {
 		page = 1
@@ -157,16 +158,17 @@ func (k *Kustomer) GetConversationMessages(ctx context.Context, conversationID s
 
 	endpoint := fmt.Sprintf("%s/conversations/%s/messages?page=%d&pageSize=%d", BaseAPIURL, conversationID, page, pageSize)
 
-	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
-		return nil, errors.Wrapf(err, "unable to get messages for conversation '%s' (page=%d, pageSize=%d)", conversationID, page, pageSize)
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to get messages for conversation '%s' (page=%d, pageSize=%d)", conversationID, page, pageSize)
 	}
 
-	return resp, nil
+	return resp, httpResp.Header, nil
 }
 
-func (k *Kustomer) GetUserByID(ctx context.Context, userID string) (*UserResponse, error) {
+func (k *Kustomer) GetUserByID(ctx context.Context, userID string) (*UserResponse, http.Header, error) {
 	if userID == "" {
-		return nil, errors.New("userID cannot be empty")
+		return nil, nil, errors.New("userID cannot be empty")
 	}
 
 	headers := k.getHeaders()
@@ -174,11 +176,12 @@ func (k *Kustomer) GetUserByID(ctx context.Context, userID string) (*UserRespons
 
 	endpoint := fmt.Sprintf("%s/users/%s", BaseAPIURL, userID)
 
-	if _, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...); err != nil {
-		return nil, errors.Wrapf(err, "unable to get user with ID '%s'", userID)
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to get user with ID '%s'", userID)
 	}
 
-	return resp, nil
+	return resp, httpResp.Header, nil
 }
 
 func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error {
