@@ -42,24 +42,24 @@ const (
 )
 
 type SendEmailRequest struct {
-	To          []*EmailContact
-	From        *EmailContact
-	Subject     string
-	TemplateID  string
-	BodyText    string
-	BodyHTML    string
-	Attachments []*Attachment
+	To                    []*EmailContact
+	From                  *EmailContact
+	Subject               string
+	TemplateID            string
+	BodyText              string
+	BodyHTML              string
+	Attachments           []*Attachment
 	AutoCloseConversation bool
-	CategoryTree   string
+	CategoryTree          string
 }
 
 type SendSMSRequest struct {
-	To   string
-	From string
-	Body string
-	Subject string // Optional. If empty, will default to the first 250 characters of the body plus '...'
+	To                    string
+	From                  string
+	Body                  string
+	Subject               string // Optional. If empty, will default to the first 250 characters of the body plus '...'
 	AutoCloseConversation bool
-	CategoryTree   string
+	CategoryTree          string
 }
 
 type CreateConversationRequest struct {
@@ -67,7 +67,7 @@ type CreateConversationRequest struct {
 	Status    ConversationStatus    `json:"status,omitempty"`
 	Name      string                `json:"name,omitempty"`
 	// Used for setting custom variables, ie. html content, categoryTree, etc.
-	Variables map[string]string     `json:"custom,omitempty"`
+	Variables map[string]string `json:"custom,omitempty"`
 }
 
 type CreateConversationResponse struct {
@@ -139,6 +139,7 @@ type UpdateDraftMessageResponse struct {
 	} `json:"data"`
 }
 
+// I am not using the Customer type because this is used in Windmill and I want to minimize imapct
 type GetCustomerByExternalIDResponse struct {
 	Data struct {
 		Type       string `json:"type"`
@@ -344,11 +345,10 @@ type SetCustomerAttributesResponse struct {
 }
 
 type SendNoteRequest struct {
-	Body string
-	Subject string
+	Body                  string
+	Subject               string
 	AutoCloseConversation bool
-	CategoryTree string
-
+	CategoryTree          string
 }
 
 type CreateDraftNoteMessageRequest struct {
@@ -360,9 +360,9 @@ type CreateDraftNoteMessageRequest struct {
 
 // ConversationListResponse represents the response from the conversations list endpoint
 type ConversationListResponse struct {
-	Meta  PaginationMeta `json:"meta"`
+	Meta  PaginationMeta  `json:"meta"`
 	Links PaginationLinks `json:"links"`
-	Data  []Conversation `json:"data"`
+	Data  []Conversation  `json:"data"`
 }
 
 // PaginationMeta contains pagination metadata
@@ -381,59 +381,59 @@ type PaginationLinks struct {
 
 // Conversation represents a Kustomer conversation
 type Conversation struct {
-	Type       string                `json:"type"`
-	ID         string                `json:"id"`
-	Attributes ConversationAttributes `json:"attributes"`
-	Relationships Relationships       `json:"relationships"`
-	Links      Links                 `json:"links"`
+	Type          string                 `json:"type"`
+	ID            string                 `json:"id"`
+	Attributes    ConversationAttributes `json:"attributes"`
+	Relationships Relationships          `json:"relationships"`
+	Links         Links                  `json:"links"`
 }
 
 // ConversationAttributes contains all conversation attributes
 type ConversationAttributes struct {
-	Name                    string                 `json:"name"`
-	Preview                 string                 `json:"preview"`
-	Channels                []string               `json:"channels"`
-	Status                  string                 `json:"status"`
-	Open                    *StatusTimestamp       `json:"open,omitempty"`
-	MessageCount            int                    `json:"messageCount"`
-	LastReceivedAt          *time.Time             `json:"lastReceivedAt"`
-	NoteCount               int                    `json:"noteCount"`
-	Satisfaction            int                    `json:"satisfaction"`
-	SatisfactionLevel       SatisfactionLevel      `json:"satisfactionLevel"`
-	CreatedAt               time.Time              `json:"createdAt"`
-	UpdatedAt               time.Time              `json:"updatedAt"`
-	ModifiedAt              time.Time              `json:"modifiedAt"`
-	LastActivityAt          time.Time              `json:"lastActivityAt"`
-	Spam                    bool                   `json:"spam"`
-	Ended                   bool                   `json:"ended"`
-	EndedAt                 *time.Time             `json:"endedAt,omitempty"`
-	EndedReason             string                 `json:"endedReason,omitempty"`
-	EndedByType             string                 `json:"endedByType,omitempty"`
-	Tags                    []interface{}          `json:"tags"`
-	SuggestedTags           []interface{}          `json:"suggestedTags"`
-	Predictions             []interface{}          `json:"predictions"`
-	Sentiment               *Sentiment             `json:"sentiment,omitempty"`
-	SuggestedShortcuts      []interface{}          `json:"suggestedShortcuts"`
-	FirstMessageIn          *MessageSummary        `json:"firstMessageIn,omitempty"`
-	FirstMessageOut         *MessageSummary        `json:"firstMessageOut,omitempty"`
-	LastMessageIn           *MessageSummary        `json:"lastMessageIn,omitempty"`
-	LastMessageOut          *MessageSummary        `json:"lastMessageOut,omitempty"`
-	LastMessageAt           *time.Time             `json:"lastMessageAt"`
-	LastMessageUnrespondedTo *MessageSummary       `json:"lastMessageUnrespondedTo,omitempty"`
-	AssignedUsers           []string               `json:"assignedUsers"`
-	AssignedTeams           []string               `json:"assignedTeams"`
-	FirstResponse           *ResponseSummary       `json:"firstResponse,omitempty"`
-	LastResponse            *ResponseSummary       `json:"lastResponse,omitempty"`
-	Direction               string                 `json:"direction"`
-	LastMessageDirection    string                 `json:"lastMessageDirection"`
-	OutboundMessageCount    int                    `json:"outboundMessageCount"`
-	InboundMessageCount     int                    `json:"inboundMessageCount"`
-	Rev                     int                    `json:"rev"`
-	Priority                int                    `json:"priority"`
-	BillingStatus           string                 `json:"billingStatus"`
-	BillableReason          string                 `json:"billableReason"`
-	Custom                  map[string]interface{} `json:"custom,omitempty"`
-	Phase                   string                 `json:"phase"`
+	Name                     string                 `json:"name"`
+	Preview                  string                 `json:"preview"`
+	Channels                 []string               `json:"channels"`
+	Status                   string                 `json:"status"`
+	Open                     *StatusTimestamp       `json:"open,omitempty"`
+	MessageCount             int                    `json:"messageCount"`
+	LastReceivedAt           *time.Time             `json:"lastReceivedAt"`
+	NoteCount                int                    `json:"noteCount"`
+	Satisfaction             int                    `json:"satisfaction"`
+	SatisfactionLevel        SatisfactionLevel      `json:"satisfactionLevel"`
+	CreatedAt                time.Time              `json:"createdAt"`
+	UpdatedAt                time.Time              `json:"updatedAt"`
+	ModifiedAt               time.Time              `json:"modifiedAt"`
+	LastActivityAt           time.Time              `json:"lastActivityAt"`
+	Spam                     bool                   `json:"spam"`
+	Ended                    bool                   `json:"ended"`
+	EndedAt                  *time.Time             `json:"endedAt,omitempty"`
+	EndedReason              string                 `json:"endedReason,omitempty"`
+	EndedByType              string                 `json:"endedByType,omitempty"`
+	Tags                     []interface{}          `json:"tags"`
+	SuggestedTags            []interface{}          `json:"suggestedTags"`
+	Predictions              []interface{}          `json:"predictions"`
+	Sentiment                *Sentiment             `json:"sentiment,omitempty"`
+	SuggestedShortcuts       []interface{}          `json:"suggestedShortcuts"`
+	FirstMessageIn           *MessageSummary        `json:"firstMessageIn,omitempty"`
+	FirstMessageOut          *MessageSummary        `json:"firstMessageOut,omitempty"`
+	LastMessageIn            *MessageSummary        `json:"lastMessageIn,omitempty"`
+	LastMessageOut           *MessageSummary        `json:"lastMessageOut,omitempty"`
+	LastMessageAt            *time.Time             `json:"lastMessageAt"`
+	LastMessageUnrespondedTo *MessageSummary        `json:"lastMessageUnrespondedTo,omitempty"`
+	AssignedUsers            []string               `json:"assignedUsers"`
+	AssignedTeams            []string               `json:"assignedTeams"`
+	FirstResponse            *ResponseSummary       `json:"firstResponse,omitempty"`
+	LastResponse             *ResponseSummary       `json:"lastResponse,omitempty"`
+	Direction                string                 `json:"direction"`
+	LastMessageDirection     string                 `json:"lastMessageDirection"`
+	OutboundMessageCount     int                    `json:"outboundMessageCount"`
+	InboundMessageCount      int                    `json:"inboundMessageCount"`
+	Rev                      int                    `json:"rev"`
+	Priority                 int                    `json:"priority"`
+	BillingStatus            string                 `json:"billingStatus"`
+	BillableReason           string                 `json:"billableReason"`
+	Custom                   map[string]interface{} `json:"custom,omitempty"`
+	Phase                    string                 `json:"phase"`
 }
 
 // StatusTimestamp represents a status with timestamp
@@ -455,44 +455,44 @@ type Sentiment struct {
 
 // MessageSummary represents a summary of a message
 type MessageSummary struct {
-	ID               string                 `json:"id"`
-	SentAt           *time.Time             `json:"sentAt,omitempty"`
-	CreatedAt        time.Time              `json:"createdAt"`
-	DirectionType    string                 `json:"directionType,omitempty"`
-	Channel          string                 `json:"channel,omitempty"`
-	Meta             map[string]interface{} `json:"meta,omitempty"`
-	CreatedBy        string                 `json:"createdBy,omitempty"`
-	CreatedByTeams   []string               `json:"createdByTeams,omitempty"`
+	ID             string                 `json:"id"`
+	SentAt         *time.Time             `json:"sentAt,omitempty"`
+	CreatedAt      time.Time              `json:"createdAt"`
+	DirectionType  string                 `json:"directionType,omitempty"`
+	Channel        string                 `json:"channel,omitempty"`
+	Meta           map[string]interface{} `json:"meta,omitempty"`
+	CreatedBy      string                 `json:"createdBy,omitempty"`
+	CreatedByTeams []string               `json:"createdByTeams,omitempty"`
 }
 
 // ResponseSummary represents response time summary
 type ResponseSummary struct {
-	ID             string    `json:"id"`
-	Time           int       `json:"time"`
-	BusinessTime   int       `json:"businessTime"`
-	CreatedAt      time.Time `json:"createdAt"`
-	CreatedBy      string    `json:"createdBy,omitempty"`
-	CreatedByTeams []string  `json:"createdByTeams,omitempty"`
-	AssignedTeams  []string  `json:"assignedTeams,omitempty"`
-	AssignedUsers  []string  `json:"assignedUsers,omitempty"`
+	ID             string     `json:"id"`
+	Time           int        `json:"time"`
+	BusinessTime   int        `json:"businessTime"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	CreatedBy      string     `json:"createdBy,omitempty"`
+	CreatedByTeams []string   `json:"createdByTeams,omitempty"`
+	AssignedTeams  []string   `json:"assignedTeams,omitempty"`
+	AssignedUsers  []string   `json:"assignedUsers,omitempty"`
 	SentAt         *time.Time `json:"sentAt,omitempty"`
-	ResponseTime   int       `json:"responseTime,omitempty"`
+	ResponseTime   int        `json:"responseTime,omitempty"`
 }
 
 // MessageListResponse represents the response from the messages list endpoint
 type MessageListResponse struct {
-	Meta  PaginationMeta `json:"meta"`
+	Meta  PaginationMeta  `json:"meta"`
 	Links PaginationLinks `json:"links"`
-	Data  []Message `json:"data"`
+	Data  []Message       `json:"data"`
 }
 
 // Message represents a Kustomer message
 type Message struct {
-	Type          string             `json:"type"`
-	ID            string             `json:"id"`
-	Attributes    MessageAttributes  `json:"attributes"`
-	Relationships Relationships      `json:"relationships"`
-	Links         MessageLinks       `json:"links"`
+	Type          string            `json:"type"`
+	ID            string            `json:"id"`
+	Attributes    MessageAttributes `json:"attributes"`
+	Relationships Relationships     `json:"relationships"`
+	Links         MessageLinks      `json:"links"`
 }
 
 // MessageAttributes contains all message attributes
@@ -552,31 +552,31 @@ type UserResponse struct {
 
 // User represents a Kustomer user (internal practitioner)
 type User struct {
-	Type          string           `json:"type"`
-	ID            string           `json:"id"`
-	Attributes    UserAttributes   `json:"attributes"`
-	Relationships Relationships    `json:"relationships"`
-	Links         Links            `json:"links"`
+	Type          string         `json:"type"`
+	ID            string         `json:"id"`
+	Attributes    UserAttributes `json:"attributes"`
+	Relationships Relationships  `json:"relationships"`
+	Links         Links          `json:"links"`
 }
 
 // UserAttributes contains all user attributes
 type UserAttributes struct {
-	DisplayName             string                 `json:"displayName"`
-	Name                    string                 `json:"name"`
-	UserType                string                 `json:"userType"`
-	Email                   string                 `json:"email"`
-	EmailSignature          *string                `json:"emailSignature,omitempty"`
-	EmailVerifiedAt         *time.Time             `json:"emailVerifiedAt,omitempty"`
-	MostRecentLoginAt       *time.Time             `json:"mostRecentLoginAt,omitempty"`
-	FirstEmailVerifiedAt    *time.Time             `json:"firstEmailVerifiedAt,omitempty"`
-	Password                UserPassword           `json:"password"`
-	Mobile                  *string                `json:"mobile,omitempty"`
-	RoleGroups              []string               `json:"roleGroups"`
-	Roles                   []string               `json:"roles"`
-	Custom                  map[string]interface{} `json:"custom"`
-	UpdatedAt               time.Time              `json:"updatedAt"`
-	ModifiedAt              time.Time              `json:"modifiedAt"`
-	CreatedAt               time.Time              `json:"createdAt"`
+	DisplayName          string                 `json:"displayName"`
+	Name                 string                 `json:"name"`
+	UserType             string                 `json:"userType"`
+	Email                string                 `json:"email"`
+	EmailSignature       *string                `json:"emailSignature,omitempty"`
+	EmailVerifiedAt      *time.Time             `json:"emailVerifiedAt,omitempty"`
+	MostRecentLoginAt    *time.Time             `json:"mostRecentLoginAt,omitempty"`
+	FirstEmailVerifiedAt *time.Time             `json:"firstEmailVerifiedAt,omitempty"`
+	Password             UserPassword           `json:"password"`
+	Mobile               *string                `json:"mobile,omitempty"`
+	RoleGroups           []string               `json:"roleGroups"`
+	Roles                []string               `json:"roles"`
+	Custom               map[string]interface{} `json:"custom"`
+	UpdatedAt            time.Time              `json:"updatedAt"`
+	ModifiedAt           time.Time              `json:"modifiedAt"`
+	CreatedAt            time.Time              `json:"createdAt"`
 }
 
 // UserPassword represents password settings for a user
@@ -586,3 +586,128 @@ type UserPassword struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// Customer represents a Kustomer customer (external user/patient)
+type Customer struct {
+	Type          string             `json:"type"`
+	ID            string             `json:"id"`
+	Attributes    CustomerAttributes `json:"attributes"`
+	Relationships Relationships      `json:"relationships"`
+	Links         Links              `json:"links"`
+}
+
+// CustomerAttributes contains all customer attributes
+type CustomerAttributes struct {
+	Name         string `json:"name"`
+	DisplayName  string `json:"displayName"`
+	DisplayColor string `json:"displayColor"`
+	DisplayIcon  string `json:"displayIcon"`
+	ExternalID   string `json:"externalId"`
+	ExternalIDs  []struct {
+		Verified         bool   `json:"verified"`
+		ExternalVerified bool   `json:"externalVerified"`
+		ExternalID       string `json:"externalId"`
+	} `json:"externalIds"`
+	SharedExternalIDs []interface{} `json:"sharedExternalIds"`
+	Emails            []struct {
+		Type             string `json:"type"`
+		Verified         bool   `json:"verified"`
+		ExternalVerified bool   `json:"externalVerified"`
+		Email            string `json:"email"`
+	} `json:"emails"`
+	SharedEmails []interface{} `json:"sharedEmails"`
+	Phones       []struct {
+		Type     string `json:"type"`
+		Phone    string `json:"phone"`
+		Verified bool   `json:"verified"`
+	} `json:"phones"`
+	SharedPhones    []interface{} `json:"sharedPhones"`
+	Whatsapps       []interface{} `json:"whatsapps"`
+	SharedWhatsapps []interface{} `json:"sharedWhatsapps"`
+	FacebookIDs     []interface{} `json:"facebookIds"`
+	InstagramIDs    []interface{} `json:"instagramIds"`
+	Socials         []interface{} `json:"socials"`
+	SharedSocials   []interface{} `json:"sharedSocials"`
+	URLs            []interface{} `json:"urls"`
+	Locations       []interface{} `json:"locations"`
+	ActiveUsers     []interface{} `json:"activeUsers"`
+	Watchers        []interface{} `json:"watchers"`
+	RecentLocation  struct {
+		UpdatedAt time.Time `json:"updatedAt"`
+	} `json:"recentLocation"`
+	Locale                 interface{} `json:"locale"`
+	BirthdayAt             *time.Time  `json:"birthdayAt"`
+	Gender                 string      `json:"gender"`
+	CreatedAt              time.Time   `json:"createdAt"`
+	UpdatedAt              time.Time   `json:"updatedAt"`
+	ModifiedAt             time.Time   `json:"modifiedAt"`
+	LastActivityAt         time.Time   `json:"lastActivityAt"`
+	LastCustomerActivityAt time.Time   `json:"lastCustomerActivityAt"`
+	Deleted                bool        `json:"deleted"`
+	ImportedAt             time.Time   `json:"importedAt"`
+	LastMessageIn          struct {
+		Sentiment interface{} `json:"sentiment"`
+		Channel   string      `json:"channel"`
+		SentAt    time.Time   `json:"sentAt"`
+	} `json:"lastMessageIn"`
+	LastMessageOut struct {
+		SentAt time.Time `json:"sentAt"`
+	} `json:"lastMessageOut"`
+	LastMessageUnrespondedTo struct{}  `json:"lastMessageUnrespondedTo"`
+	LastMessageAt            time.Time `json:"lastMessageAt"`
+	LastConversation         struct {
+		Sentiment struct {
+			Polarity   int     `json:"polarity"`
+			Confidence float64 `json:"confidence"`
+		} `json:"sentiment"`
+		ID       string        `json:"id"`
+		Channels []string      `json:"channels"`
+		Tags     []interface{} `json:"tags"`
+	} `json:"lastConversation"`
+	ConversationCounts struct {
+		Open    int `json:"open"`
+		Done    int `json:"done"`
+		Snoozed int `json:"snoozed"`
+		All     int `json:"all"`
+	} `json:"conversationCounts"`
+	Preview struct {
+		Channel   string    `json:"channel"`
+		Subject   string    `json:"subject"`
+		Text      string    `json:"text"`
+		Type      string    `json:"type"`
+		PreviewAt time.Time `json:"previewAt"`
+	} `json:"preview"`
+	Tags      []interface{} `json:"tags"`
+	Sentiment struct {
+		Polarity   int     `json:"polarity"`
+		Confidence float64 `json:"confidence"`
+	} `json:"sentiment"`
+	Custom            map[string]interface{} `json:"custom"`
+	ProgressiveStatus string                 `json:"progressiveStatus"`
+	Verified          bool                   `json:"verified"`
+	Rev               int                    `json:"rev"`
+	RecentItems       []struct {
+		Meta      map[string]interface{} `json:"meta"`
+		UpdatedAt time.Time              `json:"updatedAt"`
+		Type      string                 `json:"type"`
+		ID        string                 `json:"id"`
+	} `json:"recentItems"`
+	DefaultLang       string `json:"defaultLang"`
+	SatisfactionLevel struct {
+		FirstSatisfaction struct {
+			SentByTeams []interface{} `json:"sentByTeams"`
+		} `json:"firstSatisfaction"`
+		LastSatisfaction struct {
+			SentByTeams []interface{} `json:"sentByTeams"`
+		} `json:"lastSatisfaction"`
+	} `json:"satisfactionLevel"`
+	RoleGroupVersions []interface{}          `json:"roleGroupVersions"`
+	AccessOverride    []interface{}          `json:"accessOverride"`
+	FirstName         string                 `json:"firstName"`
+	LastName          string                 `json:"lastName"`
+	UnmaskingWindow   map[string]interface{} `json:"unmaskingWindow"`
+}
+
+// GetCustomerByIDResponse represents the response from getting a customer by ID
+type GetCustomerByIDResponse struct {
+	Data Customer `json:"data"`
+}
