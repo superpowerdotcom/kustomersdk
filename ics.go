@@ -42,7 +42,7 @@ type ICSFile struct {
 var DefaultOrganizer = &ICSAttendee{
 	FirstName: "Superpower",
 	LastName:  "Health",
-	Email:     "noreply@superpower.com",
+	Email:     "concierge@superpower.com",
 }
 
 // NewICSFile creates a new ICS file using the provided configuration and attendees list
@@ -65,7 +65,6 @@ func NewICSFile(p *ICSParams, attendees []*ICSAttendee) (*ICSFile, error) {
 // ToFile returns the ICS file as a byte slice
 func (i *ICSFile) ToFile() []byte {
 	cal := ics.NewCalendar()
-
 
 	if i.Params.Status == ICSStatusCancelled {
 		cal.SetMethod(ics.MethodCancel)
