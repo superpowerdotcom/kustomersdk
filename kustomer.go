@@ -78,7 +78,7 @@ func New(opts *Options) (*Kustomer, error) {
 	// or if we want to use a custom client for any reason
 	if opts.Client == nil {
 		opts.Client = &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 30 * time.Second,
 		}
 	}
 
