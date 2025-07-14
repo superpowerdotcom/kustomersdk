@@ -33,6 +33,18 @@ type IKustomer interface {
 	// GetCustomerByExternalID retrieves a customer by their external ID, which in our case is the database ID
 	GetCustomerByExternalID(ctx context.Context, databaseID string) (*GetCustomerByExternalIDResponse, error)
 
+	// GetCustomerByID retrieves a customer by their Kustomer customer ID
+	GetCustomerByID(ctx context.Context, customerID string) (*GetCustomerByIDResponse, http.Header, error)
+
+	// ListConversations retrieves conversations with pagination and optional date filtering
+	ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, http.Header, error)
+
+	// GetConversationMessages retrieves messages for a conversation with pagination
+	GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, http.Header, error)
+
+	// GetUserByID retrieves a user by their ID for internal practitioner data
+	GetUserByID(ctx context.Context, userID string) (*UserResponse, http.Header, error)
+
 	// SendEmail sends an email to a Kustomer
 	SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error
 
@@ -66,7 +78,7 @@ func New(opts *Options) (*Kustomer, error) {
 	// or if we want to use a custom client for any reason
 	if opts.Client == nil {
 		opts.Client = &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 30 * time.Second,
 		}
 	}
 
@@ -101,6 +113,98 @@ func (k *Kustomer) GetCustomerByExternalID(ctx context.Context, externalID strin
 	return resp, nil
 }
 
+func (k *Kustomer) GetCustomerByID(ctx context.Context, customerID string) (*GetCustomerByIDResponse, http.Header, error) {
+	if customerID == "" {
+		return nil, nil, errors.New("customerID cannot be empty")
+	}
+
+	headers := k.getHeaders()
+	resp := &GetCustomerByIDResponse{}
+
+	endpoint := fmt.Sprintf("%s/customers/%s", BaseAPIURL, customerID)
+
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to get customer by ID '%s'", customerID)
+	}
+
+	return resp, httpResp.Header, nil
+}
+
+func (k *Kustomer) ListConversations(ctx context.Context, page int, pageSize int, startTime *time.Time) (*ConversationListResponse, http.Header, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 1000 {
+		pageSize = 1000
+	}
+
+	headers := k.getHeaders()
+	resp := &ConversationListResponse{}
+
+	endpoint := fmt.Sprintf("%s/conversations?page=%d&pageSize=%d", BaseAPIURL, page, pageSize)
+
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to list conversations (page=%d, pageSize=%d)", page, pageSize)
+	}
+
+	// Manual date filtering since Kustomer API doesn't support it natively
+	if startTime != nil {
+		filteredData := make([]Conversation, 0)
+		for _, conversation := range resp.Data {
+			if conversation.Attributes.UpdatedAt.After(*startTime) || conversation.Attributes.UpdatedAt.Equal(*startTime) {
+				filteredData = append(filteredData, conversation)
+			}
+		}
+		resp.Data = filteredData
+	}
+
+	return resp, httpResp.Header, nil
+}
+
+func (k *Kustomer) GetConversationMessages(ctx context.Context, conversationID string, page int, pageSize int) (*MessageListResponse, http.Header, error) {
+	if conversationID == "" {
+		return nil, nil, errors.New("conversationID cannot be empty")
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 1000 {
+		pageSize = 1000
+	}
+
+	headers := k.getHeaders()
+	resp := &MessageListResponse{}
+
+	endpoint := fmt.Sprintf("%s/conversations/%s/messages?page=%d&pageSize=%d", BaseAPIURL, conversationID, page, pageSize)
+
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to get messages for conversation '%s' (page=%d, pageSize=%d)", conversationID, page, pageSize)
+	}
+
+	return resp, httpResp.Header, nil
+}
+
+func (k *Kustomer) GetUserByID(ctx context.Context, userID string) (*UserResponse, http.Header, error) {
+	if userID == "" {
+		return nil, nil, errors.New("userID cannot be empty")
+	}
+
+	headers := k.getHeaders()
+	resp := &UserResponse{}
+
+	endpoint := fmt.Sprintf("%s/users/%s", BaseAPIURL, userID)
+
+	httpResp, err := k.call(ctx, endpoint, http.MethodGet, nil, resp, headers...)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "unable to get user with ID '%s'", userID)
+	}
+
+	return resp, httpResp.Header, nil
+}
+
 func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEmailRequest) error {
 	if err := validateSendEmailRequest(req); err != nil {
 		return errors.Wrap(err, "failed to validate SendEmailRequest")
@@ -113,7 +217,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 	if req.AutoCloseConversation {
 		conversationStatus = ConversationStatusDone
 	}
-	
+
 	// Create Conversation
 	conversationReq := &CreateConversationRequest{
 		Direction: ConversationDirectionOut,
@@ -121,7 +225,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 		Name:      req.Subject,
 		Variables: map[string]string{},
 	}
-	
+
 	// Add categoryTree to the custom variables if it's specified
 	if req.CategoryTree != "" {
 		conversationReq.Variables["categoryTree"] = req.CategoryTree
@@ -138,7 +242,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 			conversationReq.Variables[k] = v
 		}
 	}
-	
+
 	conversationResp, err := k.createConversation(ctx, customerID, conversationReq)
 	if err != nil {
 		return errors.Wrap(err, "unable to create conversation")
@@ -225,13 +329,12 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 		Name:      req.Subject,
 		Variables: map[string]string{},
 	}
-	
+
 	// Add categoryTree to the custom variables if it's specified
 	if req.CategoryTree != "" {
 		convoReq.Variables["categoryTree"] = req.CategoryTree
 	}
-	
-	
+
 	convoResp, err := k.createConversation(ctx, customerID, convoReq)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
@@ -282,12 +385,12 @@ func (k *Kustomer) SendNote(ctx context.Context, customerID string, req *SendNot
 		Name:      note,
 		Variables: map[string]string{},
 	}
-	
+
 	// Add categoryTree to the custom variables if it's specified
 	if req.CategoryTree != "" {
 		convoReq.Variables["categoryTree"] = req.CategoryTree
 	}
-	
+
 	convoResp, err := k.createConversation(ctx, customerID, convoReq)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
@@ -642,5 +745,3 @@ func chunkSMSMessage(message string) []string {
 
 	return chunks
 }
-
-
