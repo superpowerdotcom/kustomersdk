@@ -113,7 +113,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 	if req.AutoCloseConversation {
 		conversationStatus = ConversationStatusDone
 	}
-	
+
 	// Create Conversation
 	conversationReq := &CreateConversationRequest{
 		Direction: ConversationDirectionOut,
@@ -121,7 +121,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 		Name:      req.Subject,
 		Variables: map[string]string{},
 	}
-	
+
 	// Add categoryTree to the custom variables if it's specified
 	if req.CategoryTree != "" {
 		conversationReq.Variables["categoryTree"] = req.CategoryTree
@@ -138,7 +138,7 @@ func (k *Kustomer) SendEmail(ctx context.Context, customerID string, req *SendEm
 			conversationReq.Variables[k] = v
 		}
 	}
-	
+
 	conversationResp, err := k.createConversation(ctx, customerID, conversationReq)
 	if err != nil {
 		return errors.Wrap(err, "unable to create conversation")
@@ -225,13 +225,12 @@ func (k *Kustomer) SendSMS(ctx context.Context, customerID string, req *SendSMSR
 		Name:      req.Subject,
 		Variables: map[string]string{},
 	}
-	
+
 	// Add categoryTree to the custom variables if it's specified
 	if req.CategoryTree != "" {
 		convoReq.Variables["categoryTree"] = req.CategoryTree
 	}
-	
-	
+
 	convoResp, err := k.createConversation(ctx, customerID, convoReq)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
@@ -282,12 +281,12 @@ func (k *Kustomer) SendNote(ctx context.Context, customerID string, req *SendNot
 		Name:      note,
 		Variables: map[string]string{},
 	}
-	
+
 	// Add categoryTree to the custom variables if it's specified
 	if req.CategoryTree != "" {
 		convoReq.Variables["categoryTree"] = req.CategoryTree
 	}
-	
+
 	convoResp, err := k.createConversation(ctx, customerID, convoReq)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create conversation for kustomer '%s'", customerID)
@@ -607,25 +606,7 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// chunkHTMLBody is used to split an HTML body into chunks of 1024 characters that
-// are then passed to Kustomer as custom variables in the conversation.
-func chunkHTMLBody(input string) map[string]string {
-	result := make(map[string]string)
-	var counter int
 
-	for start := 0; start < len(input); start += htmlBodyChunkSize {
-		end := start + htmlBodyChunkSize
-		if end > len(input) {
-			end = len(input)
-		}
-
-		key := fmt.Sprintf("htmlContent%dStr", counter)
-		result[key] = input[start:end]
-		counter++
-	}
-
-	return result
-}
 
 // chunkSMSMessage is used to split an MMS message into chunks of 1600 characters
 // as that is the max length for a single MMS message
@@ -642,5 +623,3 @@ func chunkSMSMessage(message string) []string {
 
 	return chunks
 }
-
-
