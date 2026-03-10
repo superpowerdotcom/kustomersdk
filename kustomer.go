@@ -710,21 +710,32 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// chunkHTMLBody is used to split an HTML body into chunks of 1024 characters that
-// are then passed to Kustomer as custom variables in the conversation.
+// chunkHTMLBody splits an HTML body into chunks that are passed to Kustomer as
+// custom variables in the conversation. Each chunk is at most htmlBodyChunkSize
+// characters long, and splits are made at the last '>' boundary so that HTML
+// tags are never broken across chunks.
 func chunkHTMLBody(input string) map[string]string {
 	result := make(map[string]string)
 	var counter int
 
-	for start := 0; start < len(input); start += htmlBodyChunkSize {
+	for start := 0; start < len(input); {
 		end := start + htmlBodyChunkSize
-		if end > len(input) {
+		if end >= len(input) {
 			end = len(input)
+		} else {
+			// Find the last '>' at or before the chunk boundary so we
+			// never split in the middle of an HTML tag.
+			lastClose := strings.LastIndex(input[start:end], ">")
+			if lastClose != -1 {
+				end = start + lastClose + 1
+			}
 		}
 
 		key := fmt.Sprintf("htmlContent%dStr", counter)
 		result[key] = input[start:end]
 		counter++
+
+		start = end
 	}
 
 	return result

@@ -3,6 +3,7 @@ package kustomersdk
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -173,6 +174,84 @@ var _ = Describe("Kustomer SDK", func() {
 
 			// This is the URL where uploads will be POSTed to
 			Expect(resp.Data.Links.Related).To(Equal("http://www.cool.com"))
+		})
+	})
+
+	Context("chunkHTMLBody", func() {
+		It("returns a single chunk when content is under 1024 chars", func() {
+			msg := "<p>Hello world</p>"
+			chunks := chunkHTMLBody(msg)
+			Expect(chunks).To(HaveLen(1))
+			Expect(chunks["htmlContent0Str"]).To(Equal(msg))
+		})
+
+		It("splits at the last '>' before the 1024-char boundary", func() {
+			// Build two paragraphs that together exceed 1024 chars.
+			// The split should land on a '>' boundary, never mid-tag.
+			first := "<p>" + strings.Repeat("a", 1005) + "</p>"  // 1012 chars
+			second := "<p>" + strings.Repeat("b", 500) + "</p>" // 507 chars
+			msg := first + second
+
+			chunks := chunkHTMLBody(msg)
+
+			// Reassemble and verify nothing was lost
+			reassembled := ""
+			for i := 0; i < len(chunks); i++ {
+				key := fmt.Sprintf("htmlContent%dStr", i)
+				chunk := chunks[key]
+				reassembled += chunk
+
+				// Every chunk must end with '>' or be the last chunk (plain text tail)
+				if i < len(chunks)-1 {
+					Expect(chunk[len(chunk)-1]).To(Equal(byte('>')))
+				}
+			}
+			Expect(reassembled).To(Equal(msg))
+		})
+
+		It("does not split in the middle of an HTML tag", func() {
+			// Place a tag so the naive 1024 split would land inside it
+			before := strings.Repeat("x", 1020)
+			tag := "<strong>"
+			after := "bold</strong>"
+			msg := before + tag + after
+
+			chunks := chunkHTMLBody(msg)
+
+			// The first chunk should NOT contain a partial tag
+			reassembled := ""
+			for i := 0; i < len(chunks); i++ {
+				key := fmt.Sprintf("htmlContent%dStr", i)
+				reassembled += chunks[key]
+			}
+			Expect(reassembled).To(Equal(msg))
+
+			// First chunk must end at or before the '<' of the tag
+			Expect(strings.HasSuffix(chunks["htmlContent0Str"], "<stro")).To(BeFalse())
+		})
+
+		It("reassembles to the original content", func() {
+			msg := strings.Repeat("<p>"+strings.Repeat("a", 500)+"</p>", 10)
+			chunks := chunkHTMLBody(msg)
+
+			reassembled := ""
+			for i := 0; i < len(chunks); i++ {
+				key := fmt.Sprintf("htmlContent%dStr", i)
+				reassembled += chunks[key]
+			}
+			Expect(reassembled).To(Equal(msg))
+		})
+
+		It("handles content with no HTML tags by falling back to max chunk size", func() {
+			msg := strings.Repeat("a", 2500)
+			chunks := chunkHTMLBody(msg)
+
+			reassembled := ""
+			for i := 0; i < len(chunks); i++ {
+				key := fmt.Sprintf("htmlContent%dStr", i)
+				reassembled += chunks[key]
+			}
+			Expect(reassembled).To(Equal(msg))
 		})
 	})
 
