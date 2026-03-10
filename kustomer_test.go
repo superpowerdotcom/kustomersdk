@@ -227,7 +227,7 @@ var _ = Describe("Kustomer SDK", func() {
 			Expect(reassembled).To(Equal(msg))
 
 			// First chunk must end at or before the '<' of the tag
-			Expect(strings.HasSuffix(chunks["htmlContent0Str"], "<stro")).To(BeFalse())
+			Expect(chunks["htmlContent0Str"]).To(Equal(before))
 		})
 
 		It("reassembles to the original content", func() {

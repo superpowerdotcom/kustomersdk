@@ -728,6 +728,8 @@ func chunkHTMLBody(input string) map[string]string {
 			lastClose := strings.LastIndex(input[start:end], ">")
 			if lastClose != -1 {
 				end = start + lastClose + 1
+			} else if lastOpen := strings.LastIndex(input[start:end], "<"); lastOpen > 0 {
+				end = start + lastOpen
 			}
 		}
 
