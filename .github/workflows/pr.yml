@@ -11,10 +11,5 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 1.22
-      - name: Configure Git for private repository access
-        env:
-          PAT_TOKEN: ${{ secrets.CI_PAT_TOKEN_READONLY }}
-        run: |
-          git config --global url."https://${PAT_TOKEN}@github.com/".insteadOf "https://github.com/"
       - name: Test
         run: make test
